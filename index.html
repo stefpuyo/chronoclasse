@@ -3,45 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestionnaire de Chronomètres EPS - 20 Élèves</title>
+  <title>ChronoClasse EPS Multi-Tablettes</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
+  
   <!-- Phosphor Icons -->
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
   <style>
-    body {
-      font-family: 'Inter', sans-serif;
-    }
-    .mono-time {
-      font-family: 'JetBrains Mono', monospace;
-    }
+    body { font-family: 'Inter', sans-serif; }
+    .mono-time { font-family: 'JetBrains Mono', monospace; }
     
-    /* Animation de clignotement pour le mode PAUSE */
     @keyframes pulse-pause-bg {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(0.97); }
+      50% { opacity: 0.65; transform: scale(0.98); }
     }
     .anim-pause-blink {
-      animation: pulse-pause-bg 1s infinite ease-in-out;
+      animation: pulse-pause-bg 0.85s infinite ease-in-out;
     }
 
     @keyframes card-glow-pause {
-      0%, 100% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.9), 0 0 5px rgba(255, 255, 255, 0.8); border-color: #ef4444; }
-      50% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.2); border-color: transparent; }
+      0%, 100% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.95), 0 0 8px rgba(255, 255, 255, 0.8); border-color: #ef4444; }
+      50% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.4); }
     }
     .card-pause-active {
-      animation: card-glow-pause 1s infinite ease-in-out;
+      animation: card-glow-pause 0.85s infinite ease-in-out;
       z-index: 10;
     }
 
-    /* Style d'impression */
     @media print {
-      body { background: white; color: black; }
+      body { background: white !important; color: black !important; }
       .no-print { display: none !important; }
-      .print-only { display: block !important; }
       .card-grid { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; }
       .chrono-card { 
         break-inside: avoid; 
@@ -53,98 +51,201 @@
     }
   </style>
 </head>
-<body class="min-h-full flex flex-col pb-12 bg-slate-950 text-slate-100">
+<body class="min-h-full flex flex-col bg-slate-950 text-slate-100 select-none pb-8">
 
   <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-30 no-print">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-        <!-- Title & Info -->
-        <div class="flex items-center space-x-3">
-          <div class="p-2.5 bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 rounded-xl text-white shadow-lg">
-            <i class="ph-bold ph-timer text-2xl"></i>
-          </div>
-          <div>
-            <h1 class="text-xl font-black tracking-tight text-white flex items-center gap-2">
-              ChronoClasse EPS <span id="total-count-badge" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">20 Chronos</span>
-            </h1>
-            <p class="text-xs text-slate-400">Cartes colorées • Import copier-coller • Gestion des pauses clignotantes</p>
-          </div>
+    <div class="max-w-[1700px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Logo & Session Badge -->
+      <div class="flex items-center gap-3">
+        <div class="p-2 bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 rounded-xl text-white shadow-lg">
+          <i class="ph-bold ph-timer text-2xl"></i>
         </div>
+        <div>
+          <h1 class="text-lg font-black tracking-tight text-white flex items-center gap-2">
+            ChronoClasse EPS <span id="app-mode-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Mode Non Défini</span>
+          </h1>
+          <p class="text-xs text-slate-400 flex items-center gap-2">
+            <span>Session: <strong id="session-code-display" class="text-amber-300 font-mono">---</strong></span>
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-slate-600" id="sync-dot"></span>
+            <span id="sync-status-text" class="text-[11px] text-slate-400">Déconnecté</span>
+          </p>
+        </div>
+      </div>
 
-        <!-- Action Controls -->
-        <div class="flex flex-wrap items-center gap-2">
-          
-          <!-- Import Modal Trigger Button -->
+      <!-- Header Action Controls -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <button onclick="switchRoleModal()" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
+          <i class="ph-bold ph-arrows-clockwise text-indigo-400"></i>
+          <span>Changer de Rôle</span>
+        </button>
+
+        <!-- PROF ONLY CONTROLS -->
+        <div id="prof-header-controls" class="hidden flex items-center gap-2 flex-wrap">
           <button onclick="openPasteModal()" class="px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl shadow-md transition flex items-center gap-1.5 border border-indigo-400/30">
-            <i class="ph-bold ph-clipboard-text text-sm"></i>
-            <span>Copier-Coller Prénoms</span>
+            <i class="ph-bold ph-clipboard-text"></i>
+            <span>Importer Élèves & VMA</span>
           </button>
 
-          <!-- Global Controls -->
-          <div class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800 shadow-inner">
-            <button id="btn-start-all" onclick="startAll()" class="px-2.5 py-1.5 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition flex items-center gap-1">
-              <i class="ph-fill ph-play"></i> Tout Démarrer
-            </button>
-            <div class="h-4 w-[1px] bg-slate-800 mx-1"></div>
-            <button id="btn-pause-all" onclick="pauseAll()" class="px-2.5 py-1.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/10 rounded-lg transition flex items-center gap-1">
-              <i class="ph-fill ph-pause"></i> Tout Pauser
-            </button>
-            <div class="h-4 w-[1px] bg-slate-800 mx-1"></div>
-            <button id="btn-reset-all" onclick="resetAllConfirm()" class="px-2.5 py-1.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-lg transition flex items-center gap-1">
-              <i class="ph-bold ph-arrow-counter-clockwise"></i> Tout RAZ
-            </button>
-          </div>
+          <button onclick="exportSummaryCSV()" class="px-3 py-1.5 text-xs font-bold bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl shadow transition flex items-center gap-1.5">
+            <i class="ph-bold ph-download-simple"></i>
+            <span>Export CSV Classe</span>
+          </button>
 
-          <!-- CSV & Export -->
-          <div class="flex items-center gap-2">
-            <label class="cursor-pointer px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="Importer un fichier CSV">
-              <i class="ph-bold ph-file-arrow-up text-indigo-400 text-sm"></i>
-              <span class="hidden sm:inline">CSV</span>
-              <input type="file" id="csv-file-input" accept=".csv, .txt" class="hidden" onchange="handleCSVImport(event)">
-            </label>
+          <button onclick="window.print()" class="px-2.5 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700">
+            <i class="ph-bold ph-printer"></i>
+          </button>
+        </div>
 
-            <button onclick="exportSummaryCSV()" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="Exporter le bilan des temps CSV">
-              <i class="ph-bold ph-download-simple text-emerald-400 text-sm"></i>
-              <span class="hidden sm:inline">Exporter</span>
-            </button>
-
-            <button onclick="window.print()" class="px-3 py-1.5 text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl border border-slate-700 transition flex items-center gap-1.5" title="Imprimer la page">
-              <i class="ph-bold ph-printer text-slate-300 text-sm"></i>
-            </button>
-          </div>
+        <!-- TABLET ONLY CONTROLS -->
+        <div id="tablet-header-controls" class="hidden flex items-center gap-2">
+          <button onclick="sendTabletDataToProf()" id="btn-send-results" class="px-4 py-1.5 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center gap-2 border border-emerald-400/40 animate-pulse">
+            <i class="ph-bold ph-paper-plane-tilt text-sm"></i>
+            <span>ENVOYER MES RÉSULTATS AU PROF</span>
+          </button>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- Chronometers Cards Grid : Exactly 5 cards per row on Large Desktop screens -->
-  <main class="max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-6 py-4 flex-1 w-full">
+  <main class="max-w-[1700px] mx-auto px-3 sm:px-4 lg:px-6 py-4 flex-1 w-full">
     
-    <!-- Info banner -->
-    <div id="info-banner" class="mb-4 p-3 rounded-2xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-slate-300 no-print shadow-sm">
-      <div class="flex items-center gap-2.5">
-        <i class="ph-fill ph-info text-amber-400 text-lg shrink-0"></i>
-        <p>
-          <strong class="text-white">Fonctionnement 1-clic :</strong> Clic sur <span class="text-emerald-400 font-bold">Start</span> = Lance la course. Clic sur <span class="text-amber-400 font-bold">Pause</span> = Stoppe la course, enregistre son temps et <span class="underline decoration-amber-400">déclenche immédiatement la pause clignotante</span>. Re-clic sur <span class="text-emerald-400 font-bold">Start</span> = Remet à zéro et lance la course suivante !
-        </p>
+    <!-- Tablet Info Banner -->
+    <div id="tablet-banner" class="hidden mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/40 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xl">
+      <div class="flex items-center gap-3">
+        <div class="p-2.5 bg-indigo-600 text-white rounded-xl font-black text-lg">
+          <i class="ph-bold ph-tablet"></i>
+        </div>
+        <div>
+          <h2 class="text-sm font-extrabold text-white flex items-center gap-2">
+            <span id="tablet-banner-title">TABLETTE 1</span>
+            <span id="last-sent-badge" class="text-[10px] bg-slate-800 text-slate-300 font-normal px-2 py-0.5 rounded-full border border-slate-700">Non encore envoyé</span>
+          </h2>
+          <p class="text-xs text-slate-300">
+            Chronométrez vos 5 élèves puis cliquez sur <strong class="text-emerald-400">"ENVOYER MES RÉSULTATS AU PROF"</strong>.
+          </p>
+        </div>
       </div>
-      <div class="flex items-center gap-2 shrink-0">
-        <button onclick="openPasteModal()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold transition text-[11px]">
-          Copier-coller la classe
-        </button>
-        <button onclick="document.getElementById('info-banner').remove()" class="p-1 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-200">
-          <i class="ph-bold ph-x"></i>
-        </button>
+
+      <button onclick="sendTabletDataToProf()" class="w-full sm:w-auto px-5 py-2 text-xs font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
+        <i class="ph-bold ph-paper-plane-tilt text-base"></i>
+        <span>Envoyer maintenant</span>
+      </button>
+    </div>
+
+    <!-- Prof Filter Tabs (All or Tablet 1..4) -->
+    <div id="prof-tabs" class="hidden mb-4 flex flex-wrap items-center justify-between gap-2 pb-1">
+      <div class="flex items-center gap-1.5 bg-slate-900 p-1 rounded-2xl border border-slate-800 overflow-x-auto">
+        <button onclick="setProfTab('ALL')" id="tab-prof-ALL" class="px-3 py-1.5 text-xs font-bold rounded-xl transition bg-indigo-600 text-white">Toute la Classe (20)</button>
+        <button onclick="setProfTab(1)" id="tab-prof-1" class="px-3 py-1.5 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white">Tablette 1</button>
+        <button onclick="setProfTab(2)" id="tab-prof-2" class="px-3 py-1.5 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white">Tablette 2</button>
+        <button onclick="setProfTab(3)" id="tab-prof-3" class="px-3 py-1.5 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white">Tablette 3</button>
+        <button onclick="setProfTab(4)" id="tab-prof-4" class="px-3 py-1.5 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white">Tablette 4</button>
+      </div>
+
+      <!-- Global Controls for Prof -->
+      <div class="flex items-center gap-1.5 bg-slate-900 p-1 rounded-2xl border border-slate-800 text-xs">
+        <span class="text-slate-400 text-[11px] font-semibold px-2"><i class="ph-bold ph-gauge text-amber-400"></i> % VMA Classe :</span>
+        <select id="global-vma-percent" onchange="applyGlobalVMAPercent(this.value)" class="bg-slate-950 text-amber-300 font-bold text-xs rounded-lg px-2 py-1 border border-slate-700 focus:outline-none focus:border-amber-400">
+          <option value="80">80%</option>
+          <option value="85">85%</option>
+          <option value="90">90%</option>
+          <option value="95">95%</option>
+          <option value="100" selected>100%</option>
+          <option value="105">105%</option>
+          <option value="110">110%</option>
+          <option value="115">115%</option>
+          <option value="120">120%</option>
+          <option value="125">125%</option>
+          <option value="130">130%</option>
+        </select>
       </div>
     </div>
 
-    <!-- Chronometers Cards Grid : 5 columns layout -->
+    <!-- Cards Grid (5 cards per row on larger screens) -->
     <div id="chrono-grid" class="card-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-3">
-      <!-- Generated dynamically by JS -->
+      <!-- Generated dynamically -->
     </div>
   </main>
 
-  <!-- Modal Paste / Import Prénoms -->
+  <!-- Modal 1: Role Selector Screen -->
+  <div id="role-modal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-6">
+      
+      <div class="text-center space-y-2">
+        <div class="inline-flex p-3 bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 rounded-2xl text-white shadow-xl mb-1">
+          <i class="ph-bold ph-timer text-3xl"></i>
+        </div>
+        <h2 class="text-2xl font-black text-white">ChronoClasse EPS Multi-Tablettes</h2>
+        <p class="text-xs text-slate-400">Choisissez le rôle de cet appareil pour la séance</p>
+      </div>
+
+      <!-- Session Code Input -->
+      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
+        <label class="block text-xs font-bold text-slate-300">Code de Session EPS (Partagé entre le prof et les 4 tablettes) :</label>
+        <div class="flex items-center gap-2">
+          <input type="text" id="input-session-code" value="EPS-2026" class="uppercase tracking-widest font-mono text-center font-black text-lg bg-slate-900 text-amber-300 border border-slate-700 rounded-xl px-3 py-2 w-full focus:outline-none focus:border-amber-400" placeholder="Ex: EPS-2026">
+          <button onclick="generateRandomSession()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold shrink-0">
+            Régénérer
+          </button>
+        </div>
+      </div>
+
+      <!-- Role Cards Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <!-- Professor Button -->
+        <button onclick="selectRole('PROF', 0)" class="p-4 rounded-2xl bg-gradient-to-br from-indigo-900/80 to-purple-900/80 hover:from-indigo-800 hover:to-purple-800 border-2 border-indigo-500/50 text-left transition flex flex-col justify-between group shadow-lg">
+          <div class="flex items-center justify-between mb-3">
+            <span class="p-2 bg-indigo-600 rounded-xl text-white"><i class="ph-bold ph-chalkboard-teacher text-xl"></i></span>
+            <i class="ph-bold ph-arrow-right text-indigo-400 group-hover:translate-x-1 transition-transform"></i>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-white text-base">PROFESSEUR</h3>
+            <p class="text-[11px] text-slate-300 mt-1">Vue d'ensemble des 20 élèves, import de classe, réception des données & export CSV.</p>
+          </div>
+        </button>
+
+        <!-- Tablet 1 Button -->
+        <button onclick="selectRole('TABLET', 1)" class="p-3.5 rounded-2xl bg-slate-800/80 hover:bg-blue-900/50 border-2 border-blue-500/40 text-left transition flex items-center gap-3">
+          <div class="p-2 bg-blue-600/30 text-blue-400 rounded-xl font-black text-sm">T1</div>
+          <div>
+            <h4 class="font-bold text-white text-xs">TABLETTE 1</h4>
+            <p class="text-[10px] text-slate-400">Élèves 1 à 5</p>
+          </div>
+        </button>
+
+        <!-- Tablet 2 Button -->
+        <button onclick="selectRole('TABLET', 2)" class="p-3.5 rounded-2xl bg-slate-800/80 hover:bg-emerald-900/50 border-2 border-emerald-500/40 text-left transition flex items-center gap-3">
+          <div class="p-2 bg-emerald-600/30 text-emerald-400 rounded-xl font-black text-sm">T2</div>
+          <div>
+            <h4 class="font-bold text-white text-xs">TABLETTE 2</h4>
+            <p class="text-[10px] text-slate-400">Élèves 6 à 10</p>
+          </div>
+        </button>
+
+        <!-- Tablet 3 Button -->
+        <button onclick="selectRole('TABLET', 3)" class="p-3.5 rounded-2xl bg-slate-800/80 hover:bg-amber-900/50 border-2 border-amber-500/40 text-left transition flex items-center gap-3">
+          <div class="p-2 bg-amber-600/30 text-amber-400 rounded-xl font-black text-sm">T3</div>
+          <div>
+            <h4 class="font-bold text-white text-xs">TABLETTE 3</h4>
+            <p class="text-[10px] text-slate-400">Élèves 11 à 15</p>
+          </div>
+        </button>
+
+        <!-- Tablet 4 Button -->
+        <button onclick="selectRole('TABLET', 4)" class="p-3.5 rounded-2xl bg-slate-800/80 hover:bg-rose-900/50 border-2 border-rose-500/40 text-left transition flex items-center gap-3 sm:col-span-2">
+          <div class="p-2 bg-rose-600/30 text-rose-400 rounded-xl font-black text-sm">T4</div>
+          <div>
+            <h4 class="font-bold text-white text-xs">TABLETTE 4</h4>
+            <p class="text-[10px] text-slate-400">Élèves 16 à 20</p>
+          </div>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal 2: Paste / Import Prénoms & VMA (Prof Only) -->
   <div id="paste-modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200 p-4">
     <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 transform scale-95 transition-transform duration-200" id="paste-modal-box">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -153,8 +254,8 @@
             <i class="ph-bold ph-clipboard-text text-xl"></i>
           </div>
           <div>
-            <h3 class="text-base font-bold text-white">Importer par Copier-Coller</h3>
-            <p class="text-xs text-slate-400">Collez votre liste de prénoms ci-dessous</p>
+            <h3 class="text-base font-bold text-white">Importer Élèves & VMA</h3>
+            <p class="text-xs text-slate-400">Répartit automatiquement sur les 4 tablettes</p>
           </div>
         </div>
         <button onclick="closePasteModal()" class="p-1 text-slate-400 hover:text-white rounded-lg">
@@ -164,44 +265,25 @@
 
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1.5">
-          Prénoms des élèves (un par ligne, ou séparés par des virgules) :
+          Format (un élève par ligne) : <br>
+          <span class="text-slate-400 font-normal">• Prénom (ex: <code class="text-amber-300">Lucas</code>)</span><br>
+          <span class="text-slate-400 font-normal">• Prénom, VMA (ex: <code class="text-amber-300">Emma, 13.5</code>)</span>
         </label>
-        <textarea id="paste-input" rows="8" class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl p-3 font-mono focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-slate-600" placeholder="Exemple :&#10;Lucas&#10;Emma&#10;Léo&#10;Jade&#10;Louis&#10;Chloé..."></textarea>
+        <textarea id="paste-input" rows="7" class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl p-3 font-mono focus:outline-none focus:border-indigo-500 placeholder-slate-600" placeholder="Lucas, 12&#10;Emma, 13.5&#10;Léo, 11..."></textarea>
       </div>
 
       <div class="flex items-center justify-between gap-3 pt-2">
         <button onclick="loadDemoClass()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl transition">
-          Charger ex. 20 élèves
+          Ex. 20 élèves
         </button>
         <div class="flex items-center gap-2">
           <button onclick="closePasteModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition">
             Annuler
           </button>
-          <button onclick="applyPastedNames()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-indigo-600/30 transition">
-            Valider et Mettre à jour
+          <button onclick="applyPastedNames()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+            Valider et Distribuer
           </button>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Reset Confirmation Modal -->
-  <div id="modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-200" id="modal-box">
-      <div class="w-12 h-12 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center mb-3 text-2xl mx-auto">
-        <i class="ph-bold ph-warning"></i>
-      </div>
-      <h3 class="text-base font-bold text-center text-white mb-1">Tout réinitialiser ?</h3>
-      <p class="text-slate-400 text-xs text-center mb-5">
-        Ceci remettra à zéro l'ensemble des chronomètres et effacera l'historique des courses et pauses.
-      </p>
-      <div class="flex items-center gap-3">
-        <button onclick="closeModal()" class="flex-1 py-2 rounded-xl border border-slate-700 text-slate-300 font-medium text-xs hover:bg-slate-800 transition">
-          Annuler
-        </button>
-        <button onclick="confirmResetAll()" class="flex-1 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-lg shadow-rose-600/30 transition">
-          Tout effacer
-        </button>
       </div>
     </div>
   </div>
@@ -212,78 +294,99 @@
     <span id="toast-msg">Message</span>
   </div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Global App Configuration
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'chrono-eps-app';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+      apiKey: "demo-api-key",
+      authDomain: "demo.firebaseapp.com",
+      projectId: "demo-project",
+      storageBucket: "demo.appspot.com",
+      messagingSenderId: "123456",
+      appId: "1:123456:web:123456"
+    };
+
+    let app, auth, db, user;
+    let currentSessionCode = localStorage.getItem('chrono_eps_session') || "EPS-2026";
+    let currentRole = "PROF"; // 'PROF' or 'TABLET'
+    let currentTabletNum = 1; // 1, 2, 3, 4
+    let activeProfTab = "ALL"; // 'ALL', 1, 2, 3, 4
+    let timerInterval = null;
+
+    // 20 Themes definition for cards
     const CARD_THEMES = [
-      { name: 'Red', bg: 'bg-red-950/90', border: 'border-red-500/60', textHeader: 'text-red-100', badge: 'bg-red-500 text-white', displayBg: 'bg-red-900/90 border-red-700/80', runText: 'text-red-200', pauseBox: 'bg-red-950/80 border-red-800', pauseText: 'text-red-300' },
-      { name: 'Blue', bg: 'bg-blue-950/90', border: 'border-blue-500/60', textHeader: 'text-blue-100', badge: 'bg-blue-500 text-white', displayBg: 'bg-blue-900/90 border-blue-700/80', runText: 'text-blue-200', pauseBox: 'bg-blue-950/80 border-blue-800', pauseText: 'text-blue-300' },
-      { name: 'Emerald', bg: 'bg-emerald-950/90', border: 'border-emerald-500/60', textHeader: 'text-emerald-100', badge: 'bg-emerald-500 text-white', displayBg: 'bg-emerald-900/90 border-emerald-700/80', runText: 'text-emerald-200', pauseBox: 'bg-emerald-950/80 border-emerald-800', pauseText: 'text-emerald-300' },
-      { name: 'Amber', bg: 'bg-amber-950/90', border: 'border-amber-500/60', textHeader: 'text-amber-100', badge: 'bg-amber-500 text-white', displayBg: 'bg-amber-900/90 border-amber-700/80', runText: 'text-amber-200', pauseBox: 'bg-amber-950/80 border-amber-800', pauseText: 'text-amber-300' },
-      { name: 'Purple', bg: 'bg-purple-950/90', border: 'border-purple-500/60', textHeader: 'text-purple-100', badge: 'bg-purple-500 text-white', displayBg: 'bg-purple-900/90 border-purple-700/80', runText: 'text-purple-200', pauseBox: 'bg-purple-950/80 border-purple-800', pauseText: 'text-purple-300' },
-      { name: 'Cyan', bg: 'bg-cyan-950/90', border: 'border-cyan-500/60', textHeader: 'text-cyan-100', badge: 'bg-cyan-500 text-white', displayBg: 'bg-cyan-900/90 border-cyan-700/80', runText: 'text-cyan-200', pauseBox: 'bg-cyan-950/80 border-cyan-800', pauseText: 'text-cyan-300' },
-      { name: 'Rose', bg: 'bg-rose-950/90', border: 'border-rose-500/60', textHeader: 'text-rose-100', badge: 'bg-rose-500 text-white', displayBg: 'bg-rose-900/90 border-rose-700/80', runText: 'text-rose-200', pauseBox: 'bg-rose-950/80 border-rose-800', pauseText: 'text-rose-300' },
-      { name: 'Orange', bg: 'bg-orange-950/90', border: 'border-orange-500/60', textHeader: 'text-orange-100', badge: 'bg-orange-500 text-white', displayBg: 'bg-orange-900/90 border-orange-700/80', runText: 'text-orange-200', pauseBox: 'bg-orange-950/80 border-orange-800', pauseText: 'text-orange-300' },
-      { name: 'Indigo', bg: 'bg-indigo-950/90', border: 'border-indigo-500/60', textHeader: 'text-indigo-100', badge: 'bg-indigo-500 text-white', displayBg: 'bg-indigo-900/90 border-indigo-700/80', runText: 'text-indigo-200', pauseBox: 'bg-indigo-950/80 border-indigo-800', pauseText: 'text-indigo-300' },
-      { name: 'Teal', bg: 'bg-teal-950/90', border: 'border-teal-500/60', textHeader: 'text-teal-100', badge: 'bg-teal-500 text-white', displayBg: 'bg-teal-900/90 border-teal-700/80', runText: 'text-teal-200', pauseBox: 'bg-teal-950/80 border-teal-800', pauseText: 'text-teal-300' },
-      { name: 'Fuchsia', bg: 'bg-fuchsia-950/90', border: 'border-fuchsia-500/60', textHeader: 'text-fuchsia-100', badge: 'bg-fuchsia-500 text-white', displayBg: 'bg-fuchsia-900/90 border-fuchsia-700/80', runText: 'text-fuchsia-200', pauseBox: 'bg-fuchsia-950/80 border-fuchsia-800', pauseText: 'text-fuchsia-300' },
-      { name: 'Lime', bg: 'bg-lime-950/90', border: 'border-lime-500/60', textHeader: 'text-lime-100', badge: 'bg-lime-600 text-white', displayBg: 'bg-lime-900/90 border-lime-700/80', runText: 'text-lime-200', pauseBox: 'bg-lime-950/80 border-lime-800', pauseText: 'text-lime-300' },
-      { name: 'Violet', bg: 'bg-violet-950/90', border: 'border-violet-500/60', textHeader: 'text-violet-100', badge: 'bg-violet-500 text-white', displayBg: 'bg-violet-900/90 border-violet-700/80', runText: 'text-violet-200', pauseBox: 'bg-violet-950/80 border-violet-800', pauseText: 'text-violet-300' },
-      { name: 'Sky', bg: 'bg-sky-950/90', border: 'border-sky-500/60', textHeader: 'text-sky-100', badge: 'bg-sky-500 text-white', displayBg: 'bg-sky-900/90 border-sky-700/80', runText: 'text-sky-200', pauseBox: 'bg-sky-950/80 border-sky-800', pauseText: 'text-sky-300' },
-      { name: 'Yellow', bg: 'bg-yellow-950/90', border: 'border-yellow-500/60', textHeader: 'text-yellow-100', badge: 'bg-yellow-600 text-white', displayBg: 'bg-yellow-900/90 border-yellow-700/80', runText: 'text-yellow-200', pauseBox: 'bg-yellow-950/80 border-yellow-800', pauseText: 'text-yellow-300' },
-      { name: 'Pink', bg: 'bg-pink-950/90', border: 'border-pink-500/60', textHeader: 'text-pink-100', badge: 'bg-pink-500 text-white', displayBg: 'bg-pink-900/90 border-pink-700/80', runText: 'text-pink-200', pauseBox: 'bg-pink-950/80 border-pink-800', pauseText: 'text-pink-300' },
-      { name: 'BlueDark', bg: 'bg-slate-900', border: 'border-indigo-400/60', textHeader: 'text-indigo-100', badge: 'bg-indigo-600 text-white', displayBg: 'bg-indigo-950 border-indigo-700/80', runText: 'text-indigo-200', pauseBox: 'bg-slate-950 border-indigo-900', pauseText: 'text-indigo-300' },
-      { name: 'EmeraldAlt', bg: 'bg-teal-900/90', border: 'border-teal-400/60', textHeader: 'text-teal-100', badge: 'bg-teal-600 text-white', displayBg: 'bg-teal-950 border-teal-700/80', runText: 'text-teal-200', pauseBox: 'bg-teal-950 border-teal-900', pauseText: 'text-teal-300' },
-      { name: 'RedDark', bg: 'bg-rose-900/90', border: 'border-rose-400/60', textHeader: 'text-rose-100', badge: 'bg-rose-600 text-white', displayBg: 'bg-rose-950 border-rose-700/80', runText: 'text-rose-200', pauseBox: 'bg-rose-950 border-rose-900', pauseText: 'text-rose-300' },
-      { name: 'AmberDark', bg: 'bg-amber-900/90', border: 'border-amber-400/60', textHeader: 'text-amber-100', badge: 'bg-amber-600 text-white', displayBg: 'bg-amber-950 border-amber-700/80', runText: 'text-amber-200', pauseBox: 'bg-amber-950 border-amber-900', pauseText: 'text-amber-300' }
+      { bg: 'bg-red-950/90', border: 'border-red-500/60', badge: 'bg-red-500 text-white', displayBg: 'bg-red-900/90 border-red-700/80', runText: 'text-red-200', pauseBox: 'bg-red-950/90 border-red-800' },
+      { bg: 'bg-blue-950/90', border: 'border-blue-500/60', badge: 'bg-blue-500 text-white', displayBg: 'bg-blue-900/90 border-blue-700/80', runText: 'text-blue-200', pauseBox: 'bg-blue-950/90 border-blue-800' },
+      { bg: 'bg-emerald-950/90', border: 'border-emerald-500/60', badge: 'bg-emerald-500 text-white', displayBg: 'bg-emerald-900/90 border-emerald-700/80', runText: 'text-emerald-200', pauseBox: 'bg-emerald-950/90 border-emerald-800' },
+      { bg: 'bg-amber-950/90', border: 'border-amber-500/60', badge: 'bg-amber-500 text-white', displayBg: 'bg-amber-900/90 border-amber-700/80', runText: 'text-amber-200', pauseBox: 'bg-amber-950/90 border-amber-800' },
+      { bg: 'bg-purple-950/90', border: 'border-purple-500/60', badge: 'bg-purple-500 text-white', displayBg: 'bg-purple-900/90 border-purple-700/80', runText: 'text-purple-200', pauseBox: 'bg-purple-950/90 border-purple-800' },
+      { bg: 'bg-cyan-950/90', border: 'border-cyan-500/60', badge: 'bg-cyan-500 text-white', displayBg: 'bg-cyan-900/90 border-cyan-700/80', runText: 'text-cyan-200', pauseBox: 'bg-cyan-950/90 border-cyan-800' },
+      { bg: 'bg-rose-950/90', border: 'border-rose-500/60', badge: 'bg-rose-500 text-white', displayBg: 'bg-rose-900/90 border-rose-700/80', runText: 'text-rose-200', pauseBox: 'bg-rose-950/90 border-rose-800' },
+      { bg: 'bg-orange-950/90', border: 'border-orange-500/60', badge: 'bg-orange-500 text-white', displayBg: 'bg-orange-900/90 border-orange-700/80', runText: 'text-orange-200', pauseBox: 'bg-orange-950/90 border-orange-800' },
+      { bg: 'bg-indigo-950/90', border: 'border-indigo-500/60', badge: 'bg-indigo-500 text-white', displayBg: 'bg-indigo-900/90 border-indigo-700/80', runText: 'text-indigo-200', pauseBox: 'bg-indigo-950/90 border-indigo-800' },
+      { bg: 'bg-teal-950/90', border: 'border-teal-500/60', badge: 'bg-teal-500 text-white', displayBg: 'bg-teal-900/90 border-teal-700/80', runText: 'text-teal-200', pauseBox: 'bg-teal-950/90 border-teal-800' },
+      { bg: 'bg-fuchsia-950/90', border: 'border-fuchsia-500/60', badge: 'bg-fuchsia-500 text-white', displayBg: 'bg-fuchsia-900/90 border-fuchsia-700/80', runText: 'text-fuchsia-200', pauseBox: 'bg-fuchsia-950/90 border-fuchsia-800' },
+      { bg: 'bg-lime-950/90', border: 'border-lime-500/60', badge: 'bg-lime-600 text-white', displayBg: 'bg-lime-900/90 border-lime-700/80', runText: 'text-lime-200', pauseBox: 'bg-lime-950/90 border-lime-800' },
+      { bg: 'bg-violet-950/90', border: 'border-violet-500/60', badge: 'bg-violet-500 text-white', displayBg: 'bg-violet-900/90 border-violet-700/80', runText: 'text-violet-200', pauseBox: 'bg-violet-950/90 border-violet-800' },
+      { bg: 'bg-sky-950/90', border: 'border-sky-500/60', badge: 'bg-sky-500 text-white', displayBg: 'bg-sky-900/90 border-sky-700/80', runText: 'text-sky-200', pauseBox: 'bg-sky-950/90 border-sky-800' },
+      { bg: 'bg-yellow-950/90', border: 'border-yellow-500/60', badge: 'bg-yellow-600 text-white', displayBg: 'bg-yellow-900/90 border-yellow-700/80', runText: 'text-yellow-200', pauseBox: 'bg-yellow-950/90 border-yellow-800' },
+      { bg: 'bg-pink-950/90', border: 'border-pink-500/60', badge: 'bg-pink-500 text-white', displayBg: 'bg-pink-900/90 border-pink-700/80', runText: 'text-pink-200', pauseBox: 'bg-pink-950/90 border-pink-800' },
+      { bg: 'bg-slate-900', border: 'border-indigo-400/60', badge: 'bg-indigo-600 text-white', displayBg: 'bg-indigo-950 border-indigo-700/80', runText: 'text-indigo-200', pauseBox: 'bg-slate-950 border-indigo-900' },
+      { bg: 'bg-teal-900/90', border: 'border-teal-400/60', badge: 'bg-teal-600 text-white', displayBg: 'bg-teal-950 border-teal-700/80', runText: 'text-teal-200', pauseBox: 'bg-teal-950 border-teal-900' },
+      { bg: 'bg-rose-900/90', border: 'border-rose-400/60', badge: 'bg-rose-600 text-white', displayBg: 'bg-rose-950 border-rose-700/80', runText: 'text-rose-200', pauseBox: 'bg-rose-950 border-rose-900' },
+      { bg: 'bg-amber-900/90', border: 'border-amber-400/60', badge: 'bg-amber-600 text-white', displayBg: 'bg-amber-950 border-amber-700/80', runText: 'text-amber-200', pauseBox: 'bg-amber-950 border-amber-900' }
     ];
 
-    let TOTAL_CHRONOS = 20;
-    let chronos = [];
-
     class Chrono {
-      constructor(id, name, theme) {
+      constructor(id, name, theme, vma = 12, percentVMA = 100, tabletId = 1) {
         this.id = id;
         this.name = name;
         this.theme = theme;
+        this.vma = parseFloat(vma) || 12;
+        this.percentVMA = parseFloat(percentVMA) || 100;
+        this.tabletId = tabletId;
         
         this.state = 'STOPPED'; // 'STOPPED', 'RUNNING', 'PAUSED'
-        
         this.runCount = 0;
         this.pauseCount = 0;
-
         this.runElapsed = 0;
         this.pauseElapsed = 0;
-
+        this.lastCompletedPauseTime = 0;
         this.runStartTime = 0;
         this.pauseStartTime = 0;
-
         this.history = [];
+      }
+
+      getTargetTime360m() {
+        if (!this.vma || this.vma <= 0 || !this.percentVMA || this.percentVMA <= 0) return null;
+        const targetSpeedKmh = this.vma * (this.percentVMA / 100);
+        const targetSeconds = 1296 / targetSpeedKmh;
+        return targetSeconds * 1000;
       }
 
       start() {
         const now = performance.now();
-
         if (this.state === 'PAUSED') {
-          // Finish current pause
           const pauseDuration = now - this.pauseStartTime;
           this.pauseElapsed = pauseDuration;
+          this.lastCompletedPauseTime = pauseDuration;
           if (this.pauseCount > 0) {
-            this.history.push({
-              type: `Pause ${this.pauseCount}`,
-              duration: this.pauseElapsed
-            });
+            this.history.push({ type: `Pause ${this.pauseCount}`, duration: this.pauseElapsed });
           }
-
-          // Reset run time to zero & start Course n+1 in 1-click
           this.runCount++;
           this.runElapsed = 0;
           this.runStartTime = now;
-          this.pauseElapsed = 0;
           this.state = 'RUNNING';
         } else if (this.state === 'STOPPED') {
           this.runCount = 1;
           this.runElapsed = 0;
           this.runStartTime = now;
           this.pauseElapsed = 0;
+          this.lastCompletedPauseTime = 0;
           this.state = 'RUNNING';
         }
       }
@@ -292,11 +395,7 @@
         if (this.state === 'RUNNING') {
           const now = performance.now();
           this.runElapsed = now - this.runStartTime;
-          this.history.push({
-            type: `Course ${this.runCount}`,
-            duration: this.runElapsed
-          });
-
+          this.history.push({ type: `Course ${this.runCount}`, duration: this.runElapsed });
           this.pauseCount++;
           this.pauseStartTime = now;
           this.pauseElapsed = 0;
@@ -310,80 +409,326 @@
         this.pauseCount = 0;
         this.runElapsed = 0;
         this.pauseElapsed = 0;
+        this.lastCompletedPauseTime = 0;
         this.runStartTime = 0;
         this.pauseStartTime = 0;
         this.history = [];
       }
 
       getCurrentRunTime(now) {
-        if (this.state === 'RUNNING') {
-          return now - this.runStartTime;
-        }
-        return this.runElapsed;
+        return this.state === 'RUNNING' ? (now - this.runStartTime) : this.runElapsed;
       }
 
       getCurrentPauseTime(now) {
-        if (this.state === 'PAUSED') {
-          return now - this.pauseStartTime;
-        }
+        if (this.state === 'PAUSED') return now - this.pauseStartTime;
+        if (this.state === 'RUNNING' && this.lastCompletedPauseTime > 0) return this.lastCompletedPauseTime;
         return this.pauseElapsed;
       }
+
+      toJSON() {
+        return {
+          id: this.id,
+          name: this.name,
+          vma: this.vma,
+          percentVMA: this.percentVMA,
+          tabletId: this.tabletId,
+          runCount: this.runCount,
+          pauseCount: this.pauseCount,
+          history: this.history
+        };
+      }
     }
 
-    window.onload = function() {
-      initChronos(20);
+    let chronos = [];
+    let unsubscribeSnapshot = null;
+
+    async function initFirebase() {
+      try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+          await signInAnonymously(auth);
+        }
+        
+        user = auth.currentUser;
+        updateSyncStatus(true, "Connecté (Temps réel)");
+      } catch (err) {
+        console.warn("Firebase offline mode fallback:", err);
+        updateSyncStatus(false, "Mode Hors Ligne");
+      }
+    }
+
+    function updateSyncStatus(connected, text) {
+      const dot = document.getElementById('sync-dot');
+      const textEl = document.getElementById('sync-status-text');
+      if (dot) dot.className = `inline-block w-2 h-2 rounded-full ${connected ? 'bg-emerald-400' : 'bg-amber-400'}`;
+      if (textEl) textEl.textContent = text;
+    }
+
+    function getSessionDocRef(sessionCode) {
+      return doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionCode.toUpperCase().trim());
+    }
+
+    function saveToLocalStorage() {
+      try {
+        const serialized = chronos.map(c => c.toJSON());
+        localStorage.setItem(`chrono_eps_students_${currentSessionCode}`, JSON.stringify(serialized));
+        localStorage.setItem('chrono_eps_session', currentSessionCode);
+      } catch (e) {
+        console.warn("LocalStorage error:", e);
+      }
+    }
+
+    function loadFromLocalStorage() {
+      try {
+        const cached = localStorage.getItem(`chrono_eps_students_${currentSessionCode}`);
+        if (cached) {
+          return JSON.parse(cached);
+        }
+      } catch (e) {
+        console.warn("LocalStorage load error:", e);
+      }
+      return null;
+    }
+
+    async function saveSessionToFirebase() {
+      saveToLocalStorage();
+      if (!db || !user) return;
+
+      try {
+        const docRef = getSessionDocRef(currentSessionCode);
+        const serialized = chronos.map(c => c.toJSON());
+
+        await setDoc(docRef, {
+          sessionCode: currentSessionCode,
+          lastUpdated: new Date().toISOString(),
+          students: serialized
+        }, { merge: true });
+      } catch (err) {
+        console.error("Error saving to Firebase:", err);
+      }
+    }
+
+    window.selectRole = async function(role, tabletNum = 0) {
+      currentRole = role;
+      currentTabletNum = tabletNum;
+      
+      const sessionInput = document.getElementById('input-session-code').value.trim();
+      currentSessionCode = sessionInput ? sessionInput.toUpperCase() : "EPS-2026";
+      localStorage.setItem('chrono_eps_session', currentSessionCode);
+
+      document.getElementById('role-modal').classList.add('hidden');
+      document.getElementById('session-code-display').textContent = currentSessionCode;
+
+      const modeBadge = document.getElementById('app-mode-badge');
+      const profControls = document.getElementById('prof-header-controls');
+      const tabletControls = document.getElementById('tablet-header-controls');
+      const profTabs = document.getElementById('prof-tabs');
+      const tabletBanner = document.getElementById('tablet-banner');
+
+      if (currentRole === 'PROF') {
+        modeBadge.textContent = "PROFESSEUR (Vue globale)";
+        modeBadge.className = "text-xs font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30";
+        profControls.classList.remove('hidden');
+        tabletControls.classList.add('hidden');
+        profTabs.classList.remove('hidden');
+        tabletBanner.classList.add('hidden');
+      } else {
+        modeBadge.textContent = `TABLETTE ${currentTabletNum} (5 Élèves)`;
+        modeBadge.className = "text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+        profControls.classList.add('hidden');
+        tabletControls.classList.remove('hidden');
+        profTabs.classList.add('hidden');
+        tabletBanner.classList.remove('hidden');
+        document.getElementById('tablet-banner-title').textContent = `TABLETTE ${currentTabletNum}`;
+      }
+
+      // Initialiser avec les données locales si existantes
+      const localData = loadFromLocalStorage();
+      initChronos(20, localData);
+
+      // Ecouter et charger immédiatement Firebase pour charger les vrais noms/VMA synchronisés
+      listenToSessionFirebase();
       renderGrid();
-      startGlobalLoop();
     };
 
-    function initChronos(count = 20, namesArray = null) {
-      TOTAL_CHRONOS = count;
+    window.switchRoleModal = function() {
+      document.getElementById('role-modal').classList.remove('hidden');
+    };
+
+    window.generateRandomSession = function() {
+      const randomCode = "EPS-" + Math.floor(1000 + Math.random() * 9000);
+      document.getElementById('input-session-code').value = randomCode;
+    };
+
+    window.setProfTab = function(tab) {
+      activeProfTab = tab;
+      [ 'ALL', 1, 2, 3, 4 ].forEach(t => {
+        const btn = document.getElementById(`tab-prof-${t}`);
+        if (btn) {
+          if (t === tab) {
+            btn.className = "px-3 py-1.5 text-xs font-bold rounded-xl transition bg-indigo-600 text-white shadow";
+          } else {
+            btn.className = "px-3 py-1.5 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white hover:bg-slate-800";
+          }
+        }
+      });
+      renderGrid();
+    };
+
+    function initChronos(count = 20, studentsData = null) {
       chronos = [];
-      for (let i = 1; i <= TOTAL_CHRONOS; i++) {
+      for (let i = 1; i <= count; i++) {
         const theme = CARD_THEMES[(i - 1) % CARD_THEMES.length];
-        const studentName = (namesArray && namesArray[i - 1]) ? namesArray[i - 1] : `Élève ${i}`;
-        chronos.push(new Chrono(i, studentName, theme));
+        const tabletId = Math.ceil(i / 5);
+        
+        let studentName = `Élève ${i}`;
+        let vma = 12;
+        let percentVMA = 100;
+        let runCount = 0;
+        let pauseCount = 0;
+        let history = [];
+
+        if (studentsData && studentsData[i - 1]) {
+          const s = studentsData[i - 1];
+          studentName = s.name || `Élève ${i}`;
+          vma = s.vma || 12;
+          percentVMA = s.percentVMA || 100;
+          runCount = s.runCount || 0;
+          pauseCount = s.pauseCount || 0;
+          history = s.history || [];
+        }
+
+        const chrono = new Chrono(i, studentName, theme, vma, percentVMA, tabletId);
+        chrono.runCount = runCount;
+        chrono.pauseCount = pauseCount;
+        chrono.history = history;
+        chronos.push(chrono);
       }
-      document.getElementById('total-count-badge').textContent = `${TOTAL_CHRONOS} Chronos`;
     }
+
+    function listenToSessionFirebase() {
+      if (!db) return;
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+
+      const docRef = getSessionDocRef(currentSessionCode);
+
+      unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data && data.students) {
+            syncIncomingData(data.students);
+          }
+        }
+      }, (err) => {
+        console.warn("Firestore snapshot error:", err);
+      });
+    }
+
+    function syncIncomingData(remoteStudents) {
+      let needsReRender = false;
+      remoteStudents.forEach(remote => {
+        const local = chronos.find(c => c.id === remote.id);
+        if (local) {
+          if (local.name !== remote.name || local.vma !== remote.vma || local.percentVMA !== remote.percentVMA) {
+            needsReRender = true;
+          }
+          local.name = remote.name || local.name;
+          local.vma = remote.vma || local.vma;
+          local.percentVMA = remote.percentVMA || local.percentVMA;
+          local.tabletId = remote.tabletId || local.tabletId;
+          
+          if (currentRole === 'PROF' || remote.tabletId !== currentTabletNum) {
+            local.runCount = remote.runCount || local.runCount;
+            local.pauseCount = remote.pauseCount || local.pauseCount;
+            local.history = remote.history || local.history;
+          }
+        }
+      });
+
+      saveToLocalStorage();
+      if (needsReRender) {
+        renderGrid();
+      }
+    }
+
+    window.sendTabletDataToProf = async function() {
+      await saveSessionToFirebase();
+      const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const badge = document.getElementById('last-sent-badge');
+      if (badge) badge.textContent = `Envoyé à ${timeStr}`;
+      showToast("Résultats transmis au professeur !", "success");
+    };
 
     function renderGrid() {
       const container = document.getElementById('chrono-grid');
+      if (!container) return;
       container.innerHTML = '';
 
-      chronos.forEach(chrono => {
-        const cardHtml = createCardHTML(chrono);
-        container.insertAdjacentHTML('beforeend', cardHtml);
+      let list = chronos;
+      if (currentRole === 'TABLET') {
+        list = chronos.filter(c => c.tabletId === currentTabletNum);
+      } else if (currentRole === 'PROF' && activeProfTab !== 'ALL') {
+        list = chronos.filter(c => c.tabletId === activeProfTab);
+      }
+
+      list.forEach(chrono => {
+        const html = createCardHTML(chrono);
+        container.insertAdjacentHTML('beforeend', html);
       });
+
+      startGlobalTimer();
     }
 
     function createCardHTML(chrono) {
       const t = chrono.theme;
+      const targetTimeMs = chrono.getTargetTime360m();
+      const targetFormatted = targetTimeMs ? formatTime(targetTimeMs) : '--:--.-';
+
       return `
-        <div id="card-${chrono.id}" class="chrono-card flex flex-col justify-between p-2.5 rounded-2xl ${t.bg} border-2 ${t.border} shadow-lg relative overflow-hidden transition-all duration-200">
+        <div id="card-${chrono.id}" class="chrono-card flex flex-col justify-between p-3 rounded-2xl ${t.bg} border-2 ${t.border} shadow-lg relative overflow-hidden transition-all duration-200">
           
           <!-- Card Header -->
-          <div class="flex items-center justify-between gap-1 mb-1">
-            <div class="flex items-center gap-1 min-w-0 flex-1">
+          <div class="flex items-center justify-between gap-1 mb-1.5">
+            <div class="flex items-center gap-1.5 min-w-0 flex-1">
               <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md ${t.badge} shrink-0 shadow-sm">
                 #${String(chrono.id).padStart(2, '0')}
               </span>
               <input type="text" 
                      value="${escapeHtml(chrono.name)}" 
                      onchange="updateName(${chrono.id}, this.value)"
-                     class="bg-slate-900/60 font-bold text-xs ${t.textHeader} focus:outline-none focus:bg-slate-900 rounded px-1.5 py-0.5 border border-slate-700/50 focus:border-white transition w-full truncate"
-                     placeholder="Prénom élève"
-                     title="Cliquer pour modifier le nom" />
+                     class="bg-slate-900/70 font-bold text-xs text-white focus:outline-none focus:bg-slate-900 rounded px-1.5 py-0.5 border border-slate-700/60 focus:border-amber-400 transition w-full truncate"
+                     placeholder="Prénom" />
             </div>
 
             <button onclick="resetChrono(${chrono.id})" 
-                    class="p-1 text-slate-300 hover:text-rose-400 hover:bg-slate-900/60 rounded-lg transition shrink-0" 
-                    title="Remise à zéro (RAZ)">
+                    class="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-900/60 rounded-lg transition shrink-0" 
+                    title="Remise à zéro">
               <i class="ph-bold ph-arrow-counter-clockwise text-sm"></i>
             </button>
           </div>
 
-          <!-- Main Time Display (Course) with Enlarged Digits -->
+          <!-- VMA & Target Row -->
+          <div class="flex items-center justify-between gap-1 mb-1.5 px-2 py-1 bg-slate-950/60 rounded-xl border border-slate-800/80 text-[11px]">
+            <div class="flex items-center gap-1">
+              <span class="text-slate-400 font-bold text-[10px]">VMA:</span>
+              <input type="number" step="0.5" min="6" max="25" 
+                     value="${chrono.vma}" 
+                     onchange="updateVMA(${chrono.id}, this.value)"
+                     class="w-11 text-center font-extrabold bg-slate-900 text-amber-300 border border-slate-700 rounded px-1 py-0.5 text-[11px] focus:outline-none focus:border-amber-400" />
+              <span class="text-[10px] text-slate-500 font-semibold">km/h</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 block font-medium">Cible 360m (${chrono.percentVMA}%)</span>
+              <span id="target-display-${chrono.id}" class="mono-time font-bold text-emerald-400 text-xs">${targetFormatted}</span>
+            </div>
+          </div>
+
+          <!-- Main Course Time Display -->
           <div class="my-1 py-2 px-1.5 ${t.displayBg} rounded-xl border text-center relative shadow-inner">
             <div class="text-[9px] uppercase tracking-wider font-extrabold text-slate-300 mb-0.5 flex items-center justify-center gap-1">
               <span id="badge-course-label-${chrono.id}">${chrono.runCount > 0 ? `Course ${chrono.runCount}` : 'Course'}</span>
@@ -394,7 +739,7 @@
           </div>
 
           <!-- Pause Time Banner -->
-          <div id="pause-container-${chrono.id}" class="mb-1.5 py-1 px-2 rounded-lg ${t.pauseBox} border text-xs font-semibold flex items-center justify-between transition-all">
+          <div id="pause-container-${chrono.id}" class="mb-2 py-1 px-2 rounded-xl ${t.pauseBox} border text-xs font-semibold flex items-center justify-between transition-all">
             <div class="flex items-center gap-1 text-[10px]">
               <i class="ph-fill ph-pause text-amber-400 text-xs"></i>
               <span id="badge-pause-label-${chrono.id}" class="text-amber-200">${chrono.pauseCount > 0 ? `Pause ${chrono.pauseCount}` : 'Pause'} :</span>
@@ -405,357 +750,271 @@
           </div>
 
           <!-- Action Buttons -->
-          <div class="grid grid-cols-2 gap-1.5">
+          <div class="grid grid-cols-2 gap-1.5 mb-1">
             <button id="btn-start-${chrono.id}" 
                     onclick="toggleStart(${chrono.id})" 
-                    class="py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition">
+                    class="py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition">
               <i class="ph-fill ph-play text-xs"></i>
               <span>Start</span>
             </button>
 
             <button id="btn-pause-${chrono.id}" 
                     onclick="togglePause(${chrono.id})" 
-                    class="py-1.5 px-2 rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition">
+                    class="py-2 px-2 rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition">
               <i class="ph-fill ph-pause text-xs"></i>
               <span>Pause</span>
             </button>
-          </div>
-
-          <!-- History Drawer -->
-          <div class="mt-1.5 pt-1 border-t border-slate-700/40">
-            <details class="group">
-              <summary class="text-[10px] font-medium text-slate-300 hover:text-white cursor-pointer flex items-center justify-between select-none">
-                <span>Historique (<span id="history-count-${chrono.id}">${chrono.history.length}</span>)</span>
-                <i class="ph-bold ph-caret-down group-open:rotate-180 transition-transform"></i>
-              </summary>
-              <div id="history-list-${chrono.id}" class="mt-1 max-h-20 overflow-y-auto space-y-1 text-[10px] mono-time text-slate-200 pr-1">
-                ${renderHistoryItems(chrono)}
-              </div>
-            </details>
           </div>
 
         </div>
       `;
     }
 
-    function formatTimeHTML(ms) {
-      if (ms < 0 || isNaN(ms)) ms = 0;
-      const totalDecis = Math.floor(ms / 100);
-      const decis = totalDecis % 10;
-      const totalSeconds = Math.floor(totalDecis / 10);
-      const seconds = totalSeconds % 60;
-      const minutes = Math.floor(totalSeconds / 60);
-
-      const mStr = String(minutes).padStart(2, '0');
-      const sStr = String(seconds).padStart(2, '0');
-      return `${mStr}:${sStr}.<span class="text-xl xl:text-2xl opacity-75">${decis}</span>`;
-    }
-
-    function renderHistoryItems(chrono) {
-      if (chrono.history.length === 0) {
-        return `<p class="text-slate-400 italic text-[9px]">Aucun enregistrement</p>`;
+    window.updateName = function(id, val) {
+      const chrono = chronos.find(c => c.id === id);
+      if (chrono) {
+        chrono.name = val.trim() || `Élève ${id}`;
+        saveSessionToFirebase();
       }
-      return chrono.history.map(item => `
-        <div class="flex justify-between items-center py-0.5 border-b border-slate-700/30">
-          <span class="${item.type.startsWith('Course') ? 'text-emerald-300 font-bold' : 'text-amber-300'}">${item.type}</span>
-          <span class="font-mono">${formatTime(item.duration)}</span>
-        </div>
-      `).join('');
+    };
+
+    window.updateVMA = function(id, val) {
+      const chrono = chronos.find(c => c.id === id);
+      if (chrono) {
+        chrono.vma = parseFloat(val) || 12;
+        const targetEl = document.getElementById(`target-display-${id}`);
+        if (targetEl) {
+          const targetTimeMs = chrono.getTargetTime360m();
+          targetEl.textContent = targetTimeMs ? formatTime(targetTimeMs) : '--:--.-';
+        }
+        saveSessionToFirebase();
+      }
+    };
+
+    window.applyGlobalVMAPercent = function(val) {
+      const percent = parseFloat(val) || 100;
+      chronos.forEach(c => {
+        c.percentVMA = percent;
+      });
+      renderGrid();
+      saveSessionToFirebase();
+    };
+
+    window.toggleStart = function(id) {
+      const chrono = chronos.find(c => c.id === id);
+      if (!chrono) return;
+
+      chrono.start();
+      updateCardUIState(chrono);
+      saveSessionToFirebase();
+    };
+
+    window.togglePause = function(id) {
+      const chrono = chronos.find(c => c.id === id);
+      if (!chrono) return;
+
+      chrono.pause();
+      updateCardUIState(chrono);
+      saveSessionToFirebase();
+    };
+
+    window.resetChrono = function(id) {
+      const chrono = chronos.find(c => c.id === id);
+      if (!chrono) return;
+
+      chrono.reset();
+      updateCardUIState(chrono);
+      saveSessionToFirebase();
+    };
+
+    function updateCardUIState(chrono) {
+      const card = document.getElementById(`card-${chrono.id}`);
+      const btnStart = document.getElementById(`btn-start-${chrono.id}`);
+      const btnPause = document.getElementById(`btn-pause-${chrono.id}`);
+      const courseLabel = document.getElementById(`badge-course-label-${chrono.id}`);
+      const pauseLabel = document.getElementById(`badge-pause-label-${chrono.id}`);
+
+      if (courseLabel) {
+        courseLabel.textContent = chrono.runCount > 0 ? `Course ${chrono.runCount}` : 'Course';
+      }
+      if (pauseLabel) {
+        pauseLabel.textContent = chrono.pauseCount > 0 ? `Pause ${chrono.pauseCount}` : 'Pause';
+      }
+
+      if (card) {
+        if (chrono.state === 'PAUSED') {
+          card.classList.add('card-pause-active');
+        } else {
+          card.classList.remove('card-pause-active');
+        }
+      }
+
+      if (btnStart && btnPause) {
+        if (chrono.state === 'RUNNING') {
+          btnStart.className = "py-2 px-2 rounded-xl bg-slate-800 text-slate-500 font-bold text-xs flex items-center justify-center gap-1 cursor-not-allowed";
+          btnPause.className = "py-2 px-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition";
+        } else if (chrono.state === 'PAUSED') {
+          btnStart.className = "py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition animate-pulse";
+          btnPause.className = "py-2 px-2 rounded-xl bg-slate-800 text-slate-500 font-bold text-xs flex items-center justify-center gap-1 cursor-not-allowed";
+        } else {
+          btnStart.className = "py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition";
+          btnPause.className = "py-2 px-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition";
+        }
+      }
     }
 
-    function startGlobalLoop() {
-      function update() {
+    function startGlobalTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      
+      timerInterval = setInterval(() => {
         const now = performance.now();
 
         chronos.forEach(chrono => {
-          const runMs = chrono.getCurrentRunTime(now);
-          const pauseMs = chrono.getCurrentPauseTime(now);
-
           const runEl = document.getElementById(`display-run-${chrono.id}`);
-          if (runEl) runEl.innerHTML = formatTimeHTML(runMs);
-
           const pauseEl = document.getElementById(`display-pause-${chrono.id}`);
-          if (pauseEl) pauseEl.innerHTML = formatTimeHTML(pauseMs);
 
-          const cardEl = document.getElementById(`card-${chrono.id}`);
-          const pauseBox = document.getElementById(`pause-container-${chrono.id}`);
-          const runBadge = document.getElementById(`badge-course-label-${chrono.id}`);
-          const pauseBadge = document.getElementById(`badge-pause-label-${chrono.id}`);
+          if (runEl) {
+            const runMs = chrono.getCurrentRunTime(now);
+            runEl.innerHTML = formatTimeHTML(runMs);
+          }
 
-          if (runBadge) runBadge.textContent = chrono.runCount > 0 ? `Course ${chrono.runCount}` : 'Course';
-          if (pauseBadge) pauseBadge.textContent = chrono.pauseCount > 0 ? `Pause ${chrono.pauseCount}` : 'Pause';
-
-          if (cardEl && pauseBox) {
-            if (chrono.state === 'PAUSED') {
-              pauseBox.classList.add('anim-pause-blink', 'bg-red-600', 'text-white', 'border-red-400');
-              cardEl.classList.add('card-pause-active');
-            } else {
-              pauseBox.classList.remove('anim-pause-blink', 'bg-red-600', 'text-white', 'border-red-400');
-              cardEl.classList.remove('card-pause-active');
-            }
+          if (pauseEl) {
+            const pauseMs = chrono.getCurrentPauseTime(now);
+            pauseEl.innerHTML = formatPauseTimeHTML(pauseMs);
           }
         });
-
-        requestAnimationFrame(update);
-      }
-      requestAnimationFrame(update);
+      }, 50);
     }
 
     function formatTime(ms) {
-      if (ms < 0 || isNaN(ms)) ms = 0;
-      const totalDecis = Math.floor(ms / 100);
-      const decis = totalDecis % 10;
-      const totalSeconds = Math.floor(totalDecis / 10);
-      const seconds = totalSeconds % 60;
-      const minutes = Math.floor(totalSeconds / 60);
+      if (ms <= 0) return '00:00.0';
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      const tenths = Math.floor((ms % 1000) / 100);
 
-      const mStr = String(minutes).padStart(2, '0');
-      const sStr = String(seconds).padStart(2, '0');
-      return `${mStr}:${sStr}.${decis}`;
+      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${tenths}`;
     }
 
-    function toggleStart(id) {
-      const chrono = chronos.find(c => c.id === id);
-      if (chrono) {
-        chrono.start();
-        updateHistoryUI(chrono);
-      }
+    function formatTimeHTML(ms) {
+      if (ms <= 0) return `00:00.<span class="text-xl xl:text-2xl opacity-75">0</span>`;
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      const tenths = Math.floor((ms % 1000) / 100);
+
+      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.<span class="text-xl xl:text-2xl opacity-75">${tenths}</span>`;
     }
 
-    function togglePause(id) {
-      const chrono = chronos.find(c => c.id === id);
-      if (chrono) {
-        chrono.pause();
-        updateHistoryUI(chrono);
-      }
+    function formatPauseTimeHTML(ms) {
+      if (ms <= 0) return `00:00.<span class="text-[10px] opacity-75">0</span>`;
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      const tenths = Math.floor((ms % 1000) / 100);
+
+      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.<span class="text-[10px] opacity-75">${tenths}</span>`;
     }
 
-    function resetChrono(id) {
-      const chrono = chronos.find(c => c.id === id);
-      if (chrono) {
-        chrono.reset();
-        updateHistoryUI(chrono);
-      }
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
-    function updateName(id, newName) {
-      const chrono = chronos.find(c => c.id === id);
-      if (chrono) {
-        chrono.name = newName.trim() || `Élève ${id}`;
-      }
-    }
-
-    function updateHistoryUI(chrono) {
-      const historyList = document.getElementById(`history-list-${chrono.id}`);
-      const historyCount = document.getElementById(`history-count-${chrono.id}`);
-      if (historyList) historyList.innerHTML = renderHistoryItems(chrono);
-      if (historyCount) historyCount.textContent = chrono.history.length;
-    }
-
-    function startAll() {
-      chronos.forEach(c => c.start());
-      chronos.forEach(c => updateHistoryUI(c));
-      showToast("Tous les chronomètres sont démarrés", "success");
-    }
-
-    function pauseAll() {
-      chronos.forEach(c => c.pause());
-      chronos.forEach(c => updateHistoryUI(c));
-      showToast("Tous les chronomètres sont en pause", "warning");
-    }
-
-    function resetAllConfirm() {
-      const modal = document.getElementById('modal-backdrop');
-      const box = document.getElementById('modal-box');
-      modal.classList.remove('hidden');
-      setTimeout(() => {
-        modal.classList.remove('opacity-0');
-        box.classList.remove('scale-95');
-        box.classList.add('scale-100');
-      }, 10);
-    }
-
-    function closeModal() {
-      const modal = document.getElementById('modal-backdrop');
-      const box = document.getElementById('modal-box');
-      box.classList.remove('scale-100');
-      box.classList.add('scale-95');
-      modal.classList.add('opacity-0');
-      setTimeout(() => { modal.classList.add('hidden'); }, 200);
-    }
-
-    function confirmResetAll() {
-      chronos.forEach(c => c.reset());
-      chronos.forEach(c => updateHistoryUI(c));
-      closeModal();
-      showToast("Toutes les données ont été réinitialisées", "info");
-    }
-
-    function openPasteModal() {
-      const modal = document.getElementById('paste-modal-backdrop');
+    window.openPasteModal = function() {
+      const backdrop = document.getElementById('paste-modal-backdrop');
       const box = document.getElementById('paste-modal-box');
-      modal.classList.remove('hidden');
+      backdrop.classList.remove('hidden');
       setTimeout(() => {
-        modal.classList.remove('opacity-0');
+        backdrop.classList.remove('opacity-0');
         box.classList.remove('scale-95');
-        box.classList.add('scale-100');
       }, 10);
-    }
+    };
 
-    function closePasteModal() {
-      const modal = document.getElementById('paste-modal-backdrop');
+    window.closePasteModal = function() {
+      const backdrop = document.getElementById('paste-modal-backdrop');
       const box = document.getElementById('paste-modal-box');
-      box.classList.remove('scale-100');
+      backdrop.classList.add('opacity-0');
       box.classList.add('scale-95');
-      modal.classList.add('opacity-0');
-      setTimeout(() => { modal.classList.add('hidden'); }, 200);
-    }
+      setTimeout(() => {
+        backdrop.classList.add('hidden');
+      }, 200);
+    };
 
-    function applyPastedNames() {
-      const text = document.getElementById('paste-input').value.trim();
-      if (!text) {
-        showToast("Veuillez coller au moins un prénom", "warning");
-        return;
-      }
+    window.loadDemoClass = function() {
+      const demoText = [
+        "Lucas, 12.5", "Emma, 13", "Léo, 11", "Chloé, 14", "Hugo, 12",
+        "Manon, 10.5", "Gabriel, 15", "Jade, 12", "Arthur, 13.5", "Louise, 11.5",
+        "Raphaël, 14", "Zélie, 12", "Jules, 13", "Inès, 10", "Maël, 12.5",
+        "Camille, 11", "Liam, 13.5", "Sarah, 12", "Ethan, 14.5", "Eva, 11.5"
+      ].join("\n");
+      document.getElementById('paste-input').value = demoText;
+    };
 
-      // Parse by line or comma/semicolon
-      const rawNames = text.split(/[\r\n,;]+/);
-      const cleanedNames = rawNames.map(n => n.trim()).filter(n => n.length > 0);
+    window.applyPastedNames = function() {
+      const rawText = document.getElementById('paste-input').value.trim();
+      if (!rawText) return;
 
-      if (cleanedNames.length === 0) {
-        showToast("Aucun prénom valide détecté", "error");
-        return;
-      }
+      const lines = rawText.split('\n').filter(l => l.trim() !== '');
 
-      initChronos(cleanedNames.length, cleanedNames);
+      lines.forEach((line, index) => {
+        if (index < 20) {
+          const parts = line.split(',');
+          const name = parts[0] ? parts[0].trim() : `Élève ${index + 1}`;
+          const vma = parts[1] ? parseFloat(parts[1].trim()) : 12;
+
+          chronos[index].name = name || `Élève ${index + 1}`;
+          chronos[index].vma = isNaN(vma) ? 12 : vma;
+        }
+      });
+
       renderGrid();
+      saveSessionToFirebase();
       closePasteModal();
-      showToast(`${cleanedNames.length} prénoms d'élèves chargés !`, "success");
-    }
+      showToast("Élèves et VMA enregistrés sur Firebase !", "success");
+    };
 
-    function loadDemoClass() {
-      const demoList = [
-        "Lucas", "Emma", "Léo", "Jade", "Louis", 
-        "Chloé", "Gabriel", "Manon", "Arthur", "Inès",
-        "Hugo", "Camille", "Maël", "Sarah", "Paul",
-        "Léa", "Antoine", "Eva", "Mathis", "Clara"
-      ];
-      document.getElementById('paste-input').value = demoList.join("\n");
-    }
-
-    function handleCSVImport(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const text = e.target.result;
-        const lines = text.split(/\r\n|\n|\r/);
-        const names = [];
-
-        lines.forEach(line => {
-          if (!line.trim()) return;
-          const firstCol = line.split(/[,;]/)[0].trim();
-          if (firstCol) {
-            const cleanName = firstCol.replace(/^["']|["']$/g, '');
-            names.push(cleanName);
-          }
-        });
-
-        if (names.length === 0) {
-          showToast("Aucun nom valide trouvé dans le fichier CSV", "error");
-          return;
-        }
-
-        initChronos(names.length, names);
-        renderGrid();
-        showToast(`${names.length} prénoms importés depuis le CSV !`, "success");
-        event.target.value = '';
-      };
-      reader.readAsText(file, 'UTF-8');
-    }
-
-    function exportSummaryCSV() {
-      const now = performance.now();
-
-      // Collect all recorded sequence headers dynamically
-      let maxEvents = 0;
-      chronos.forEach(c => {
-        // Build current state timeline including active run/pause if any
-        let count = c.history.length;
-        if (c.state === 'RUNNING') count += 1; // current run in progress
-        if (c.state === 'PAUSED') count += 1;  // current active pause
-        if (count > maxEvents) maxEvents = count;
-      });
-
-      // Construct headers row
-      const headers = ["ID", "Eleve"];
-      const headerLabels = [];
-
-      for (let i = 0; i < maxEvents; i++) {
-        if (i % 2 === 0) {
-          const runNum = Math.floor(i / 2) + 1;
-          headerLabels.push(`Course ${runNum}`);
-        } else {
-          const pauseNum = Math.floor(i / 2) + 1;
-          headerLabels.push(`Pause ${pauseNum}`);
-        }
-      }
-
-      let csvRows = [];
-      csvRows.push([...headers, ...headerLabels].map(h => `"${h}"`).join(","));
+    window.exportSummaryCSV = function() {
+      let csv = "ID;Prenom;Tablette;VMA;Percent_VMA;Temps_Cible_360m;Historique_Details\n";
 
       chronos.forEach(c => {
-        let row = [`"${c.id}"`, `"${escapeCSV(c.name)}"`];
-        let studentTimeline = [];
+        const targetMs = c.getTargetTime360m();
+        const targetStr = targetMs ? formatTime(targetMs) : '';
+        const historyDetails = c.history.map(h => `${h.type}: ${formatTime(h.duration)}`).join(" | ");
 
-        // Add history items
-        c.history.forEach(item => {
-          studentTimeline.push(formatTime(item.duration));
-        });
-
-        // Add active running or paused time if running/paused currently
-        if (c.state === 'RUNNING') {
-          studentTimeline.push(formatTime(c.getCurrentRunTime(now)));
-        } else if (c.state === 'PAUSED') {
-          studentTimeline.push(formatTime(c.getCurrentPauseTime(now)));
-        }
-
-        // Fill empty columns for students with fewer events
-        while (studentTimeline.length < maxEvents) {
-          studentTimeline.push("");
-        }
-
-        row.push(...studentTimeline.map(val => `"${val}"`));
-        csvRows.push(row.join(","));
+        csv += `${c.id};"${c.name}";${c.tabletId};${c.vma};${c.percentVMA}%;"${targetStr}";"${historyDetails}"\n`;
       });
 
-      const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + csvRows.join("\n");
-      const encodedUri = encodeURI(csvContent);
-      const link = document.createElement("a");
-      link.setAttribute("href", encodedUri);
-      link.setAttribute("download", `Bilan_ChronoClasse_${new Date().toISOString().slice(0,10)}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `ChronoClasse_${currentSessionCode}_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
 
-      showToast("Fichier CSV (1 ligne par élève) téléchargé !", "success");
-    }
+      showToast("Export CSV généré !", "success");
+    };
 
-    function escapeCSV(text) { return text.replace(/"/g, '""'); }
-    function escapeHtml(text) { return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
-
-    function showToast(message, type = 'info') {
+    function showToast(msg, type = "success") {
       const toast = document.getElementById('toast');
-      const msgEl = document.getElementById('toast-msg');
-      const iconEl = document.getElementById('toast-icon');
+      const icon = document.getElementById('toast-icon');
+      const text = document.getElementById('toast-msg');
 
-      msgEl.textContent = message;
+      if (!toast || !text) return;
 
-      if (type === 'success') iconEl.className = 'ph-bold ph-check-circle text-emerald-400 text-lg';
-      else if (type === 'warning') iconEl.className = 'ph-bold ph-warning-circle text-amber-400 text-lg';
-      else if (type === 'error') iconEl.className = 'ph-bold ph-x-circle text-rose-400 text-lg';
-      else iconEl.className = 'ph-bold ph-info text-indigo-400 text-lg';
+      text.textContent = msg;
+      if (type === "success") {
+        icon.className = "ph-bold ph-check-circle text-emerald-400 text-lg";
+      } else if (type === "warning") {
+        icon.className = "ph-bold ph-warning-circle text-amber-400 text-lg";
+      } else {
+        icon.className = "ph-bold ph-x-circle text-rose-400 text-lg";
+      }
 
       toast.classList.remove('translate-y-20', 'opacity-0');
       toast.classList.add('translate-y-0', 'opacity-100');
@@ -765,6 +1024,11 @@
         toast.classList.add('translate-y-20', 'opacity-0');
       }, 3000);
     }
+
+    window.onload = async function() {
+      document.getElementById('input-session-code').value = currentSessionCode;
+      await initFirebase();
+    };
   </script>
 </body>
 </html>
