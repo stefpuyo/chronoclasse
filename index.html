@@ -1,1034 +1,502 @@
 <!DOCTYPE html>
-<html lang="fr" class="h-full bg-slate-950 text-slate-100">
+<html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ChronoClasse EPS Multi-Tablettes</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Phosphor Icons -->
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrono EPS - 100% Hors Ligne</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --accent: #4ade80;
+            --danger: #f87171;
+            --pause-color: #facc15;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+        h1 { text-align: center; font-size: 2rem; margin-bottom: 10px; }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { opacity: 0.8; }
+        .btn-primary { background: #3b82f6; color: white; }
+        .btn-success { background: var(--accent); color: #121212; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-sync { background: #a855f7; color: white; }
+        
+        /* Grille : 5 cartes par ligne sur grand écran */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        @media (min-width: 1400px) {
+            .grid { grid-template-columns: repeat(5, 1fr); }
+        }
 
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    .mono-time { font-family: 'JetBrains Mono', monospace; }
-    
-    @keyframes pulse-pause-bg {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.65; transform: scale(0.98); }
-    }
-    .anim-pause-blink {
-      animation: pulse-pause-bg 0.85s infinite ease-in-out;
-    }
+        /* Cartes colorées */
+        .card {
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 3px solid rgba(255,255,255,0.1);
+        }
+        .name-input {
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-align: center;
+            background: transparent;
+            border: none;
+            color: white;
+            width: 100%;
+            margin-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+        .vma-group {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            width: 100%;
+            justify-content: space-between;
+        }
+        .vma-group input, .vma-group select {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        .vma-group input { width: 45%; }
+        .vma-group select { width: 50%; }
+        
+        .target-time {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #d1d5db;
+            margin-bottom: 10px;
+        }
 
-    @keyframes card-glow-pause {
-      0%, 100% { box-shadow: 0 0 22px rgba(239, 68, 68, 0.95), 0 0 8px rgba(255, 255, 255, 0.8); border-color: #ef4444; }
-      50% { box-shadow: 0 0 6px rgba(239, 68, 68, 0.3); border-color: rgba(239, 68, 68, 0.4); }
-    }
-    .card-pause-active {
-      animation: card-glow-pause 0.85s infinite ease-in-out;
-      z-index: 10;
-    }
+        /* Chiffres géants */
+        .timer-display {
+            font-size: 3rem;
+            font-family: monospace;
+            font-weight: 900;
+            margin: 10px 0;
+            letter-spacing: -1px;
+        }
+        
+        .pause-display {
+            font-size: 1.5rem;
+            font-family: monospace;
+            font-weight: bold;
+            color: var(--pause-color);
+            height: 30px;
+        }
 
-    @media print {
-      body { background: white !important; color: black !important; }
-      .no-print { display: none !important; }
-      .card-grid { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; }
-      .chrono-card { 
-        break-inside: avoid; 
-        border: 2px solid #333 !important; 
-        color: black !important;
-        background: white !important;
-        margin-bottom: 12px;
-      }
-    }
-  </style>
+        /* Animation clignotement pour la pause */
+        .blinking {
+            animation: blinker 1s linear infinite;
+            color: var(--pause-color);
+            text-shadow: 0 0 10px var(--pause-color);
+        }
+        @keyframes blinker {
+            50% { opacity: 0.2; }
+        }
+
+        .status-badge {
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .card-controls {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .card-controls button { flex: 1; padding: 15px 0; font-size: 1.2rem; }
+
+        /* Modal Import/Export */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+        }
+        .modal-content textarea {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+            background: #121212;
+            color: white;
+            font-family: monospace;
+        }
+    </style>
 </head>
-<body class="min-h-full flex flex-col bg-slate-950 text-slate-100 select-none pb-8">
+<body>
 
-  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-30 no-print">
-    <div class="max-w-[1700px] mx-auto px-4 py-2.5 flex flex-wrap items-center justify-between gap-3">
-      
-      <!-- Logo & Session Badge -->
-      <div class="flex items-center gap-3">
-        <div class="p-2 bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 rounded-xl text-white shadow-lg">
-          <i class="ph-bold ph-timer text-2xl"></i>
-        </div>
-        <div>
-          <h1 class="text-lg font-black tracking-tight text-white flex items-center gap-2">
-            ChronoClasse EPS <span id="app-mode-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Mode Non Défini</span>
-          </h1>
-          <p class="text-xs text-slate-400 flex items-center gap-2">
-            <span>Session: <strong id="session-code-display" class="text-amber-300 font-mono">---</strong></span>
-            <span class="inline-block w-1.5 h-1.5 rounded-full bg-slate-600" id="sync-dot"></span>
-            <span id="sync-status-text" class="text-[11px] text-slate-400">Déconnecté</span>
-          </p>
-        </div>
-      </div>
-
-      <!-- Header Action Controls -->
-      <div class="flex items-center gap-2 flex-wrap">
-        <button onclick="switchRoleModal()" class="px-3 py-1.5 text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition flex items-center gap-1.5">
-          <i class="ph-bold ph-arrows-clockwise text-indigo-400"></i>
-          <span>Changer de Rôle</span>
-        </button>
-
-        <!-- PROF ONLY CONTROLS -->
-        <div id="prof-header-controls" class="hidden flex items-center gap-2 flex-wrap">
-          <button onclick="openPasteModal()" class="px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 rounded-xl shadow-md transition flex items-center gap-1.5 border border-indigo-400/30">
-            <i class="ph-bold ph-clipboard-text"></i>
-            <span>Importer Élèves & VMA</span>
-          </button>
-
-          <button onclick="exportSummaryCSV()" class="px-3 py-1.5 text-xs font-bold bg-emerald-700 hover:bg-emerald-600 text-white rounded-xl shadow transition flex items-center gap-1.5">
-            <i class="ph-bold ph-download-simple"></i>
-            <span>Export CSV Classe</span>
-          </button>
-
-          <button onclick="window.print()" class="px-2.5 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700">
-            <i class="ph-bold ph-printer"></i>
-          </button>
-        </div>
-
-        <!-- TABLET ONLY CONTROLS -->
-        <div id="tablet-header-controls" class="hidden flex items-center gap-2">
-          <button onclick="sendTabletDataToProf()" id="btn-send-results" class="px-4 py-1.5 text-xs font-black text-white bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center gap-2 border border-emerald-400/40 animate-pulse">
-            <i class="ph-bold ph-paper-plane-tilt text-sm"></i>
-            <span>ENVOYER MES RÉSULTATS AU PROF</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main class="max-w-[1700px] mx-auto px-3 sm:px-4 lg:px-6 py-4 flex-1 w-full">
+    <h1>⏱️ Chrono EPS - Hors Ligne</h1>
     
-    <!-- Tablet Info Banner -->
-    <div id="tablet-banner" class="hidden mb-4 p-3.5 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/40 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xl">
-      <div class="flex items-center gap-3">
-        <div class="p-2.5 bg-indigo-600 text-white rounded-xl font-black text-lg">
-          <i class="ph-bold ph-tablet"></i>
-        </div>
-        <div>
-          <h2 class="text-sm font-extrabold text-white flex items-center gap-2">
-            <span id="tablet-banner-title">TABLETTE 1</span>
-            <span id="last-sent-badge" class="text-[10px] bg-slate-800 text-slate-300 font-normal px-2 py-0.5 rounded-full border border-slate-700">Non encore envoyé</span>
-          </h2>
-          <p class="text-xs text-slate-300">
-            Chronométrez vos 5 élèves puis cliquez sur <strong class="text-emerald-400">"ENVOYER MES RÉSULTATS AU PROF"</strong>.
-          </p>
-        </div>
-      </div>
-
-      <button onclick="sendTabletDataToProf()" class="w-full sm:w-auto px-5 py-2 text-xs font-black bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-xl shadow-lg transition flex items-center justify-center gap-2">
-        <i class="ph-bold ph-paper-plane-tilt text-base"></i>
-        <span>Envoyer maintenant</span>
-      </button>
+    <div class="controls">
+        <button class="btn-primary" onclick="addCard()">+ Ajouter Élève</button>
+        <button class="btn-primary" onclick="openImportModal()">📥 Import Prénoms</button>
+        <button class="btn-success" onclick="exportCSV()">📊 Exporter CSV (Bilan)</button>
+        <button class="btn-sync" onclick="openSyncModal()">🔄 Synchro Multi-Tablettes</button>
     </div>
 
-    <!-- Prof Filter Tabs (All or Tablet 1..4) -->
-    <div id="prof-tabs" class="hidden mb-4 flex flex-wrap items-center justify-between gap-2 pb-1">
-      <div class="flex items-center gap-1.5 bg-slate-900 p-1 rounded-2xl border border-slate-800 overflow-x-auto">
-        <button onclick="setProfTab('ALL')" id="tab-prof-ALL" class="px-3 py-1.5 text-xs font-bold rounded-xl transition bg-indigo-600 text-white">Toute la Classe (20)</button>
-        <button onclick="setProfTab(1)" id="tab-prof-1" class="px-3 py-1.5 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white">Tablette 1</button>
-        <button onclick="setProfTab(2)" id="tab-prof-2" class="px-3 py-1.5 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white">Tablette 2</button>
-        <button onclick="setProfTab(3)" id="tab-prof-3" class="px-3 py-1.5 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white">Tablette 3</button>
-        <button onclick="setProfTab(4)" id="tab-prof-4" class="px-3 py-1.5 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white">Tablette 4</button>
-      </div>
+    <div class="grid" id="chrono-container"></div>
 
-      <!-- Global Controls for Prof -->
-      <div class="flex items-center gap-1.5 bg-slate-900 p-1 rounded-2xl border border-slate-800 text-xs">
-        <span class="text-slate-400 text-[11px] font-semibold px-2"><i class="ph-bold ph-gauge text-amber-400"></i> % VMA Classe :</span>
-        <select id="global-vma-percent" onchange="applyGlobalVMAPercent(this.value)" class="bg-slate-950 text-amber-300 font-bold text-xs rounded-lg px-2 py-1 border border-slate-700 focus:outline-none focus:border-amber-400">
-          <option value="80">80%</option>
-          <option value="85">85%</option>
-          <option value="90">90%</option>
-          <option value="95">95%</option>
-          <option value="100" selected>100%</option>
-          <option value="105">105%</option>
-          <option value="110">110%</option>
-          <option value="115">115%</option>
-          <option value="120">120%</option>
-          <option value="125">125%</option>
-          <option value="130">130%</option>
-        </select>
-      </div>
+    <!-- Modal Import Prénoms -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <h2>Importer Élèves (Copier-Coller)</h2>
+            <p>Collez la liste (Prénom, VMA). Un élève par ligne.</p>
+            <textarea id="importText" placeholder="Ex:\nEmma, 12\nLucas, 13.5\nLéa"></textarea>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-success" onclick="processImport()">Importer</button>
+                <button class="btn-danger" onclick="closeModals()">Annuler</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Cards Grid (5 cards per row on larger screens) -->
-    <div id="chrono-grid" class="card-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-3">
-      <!-- Generated dynamically -->
+    <!-- Modal Synchronisation Hors Ligne -->
+    <div id="syncModal" class="modal">
+        <div class="modal-content">
+            <h2>🔄 Synchronisation (Hors Ligne)</h2>
+            <p><strong>Élèves :</strong> Générez le code et envoyez-le au professeur (AirDrop/Copier).</p>
+            <button class="btn-primary" style="width: 100%; margin-bottom:10px;" onclick="generateSyncData()">1. Générer mes résultats</button>
+            <textarea id="syncText" placeholder="Les données chiffrées apparaîtront ici..."></textarea>
+            
+            <p><strong>Professeur :</strong> Collez les données reçues d'une tablette ici et validez.</p>
+            <button class="btn-success" style="width: 100%; margin-bottom:10px;" onclick="importSyncData()">2. Fusionner les résultats reçus</button>
+            <button class="btn-danger" onclick="closeModals()">Fermer</button>
+        </div>
     </div>
-  </main>
 
-  <!-- Modal 1: Role Selector Screen -->
-  <div id="role-modal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-6">
-      
-      <div class="text-center space-y-2">
-        <div class="inline-flex p-3 bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-600 rounded-2xl text-white shadow-xl mb-1">
-          <i class="ph-bold ph-timer text-3xl"></i>
-        </div>
-        <h2 class="text-2xl font-black text-white">ChronoClasse EPS Multi-Tablettes</h2>
-        <p class="text-xs text-slate-400">Choisissez le rôle de cet appareil pour la séance</p>
-      </div>
-
-      <!-- Session Code Input -->
-      <div class="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2">
-        <label class="block text-xs font-bold text-slate-300">Code de Session EPS (Partagé entre le prof et les 4 tablettes) :</label>
-        <div class="flex items-center gap-2">
-          <input type="text" id="input-session-code" value="EPS-2026" class="uppercase tracking-widest font-mono text-center font-black text-lg bg-slate-900 text-amber-300 border border-slate-700 rounded-xl px-3 py-2 w-full focus:outline-none focus:border-amber-400" placeholder="Ex: EPS-2026">
-          <button onclick="generateRandomSession()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold shrink-0">
-            Régénérer
-          </button>
-        </div>
-      </div>
-
-      <!-- Role Cards Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <!-- Professor Button -->
-        <button onclick="selectRole('PROF', 0)" class="p-4 rounded-2xl bg-gradient-to-br from-indigo-900/80 to-purple-900/80 hover:from-indigo-800 hover:to-purple-800 border-2 border-indigo-500/50 text-left transition flex flex-col justify-between group shadow-lg">
-          <div class="flex items-center justify-between mb-3">
-            <span class="p-2 bg-indigo-600 rounded-xl text-white"><i class="ph-bold ph-chalkboard-teacher text-xl"></i></span>
-            <i class="ph-bold ph-arrow-right text-indigo-400 group-hover:translate-x-1 transition-transform"></i>
-          </div>
-          <div>
-            <h3 class="font-extrabold text-white text-base">PROFESSEUR</h3>
-            <p class="text-[11px] text-slate-300 mt-1">Vue d'ensemble des 20 élèves, import de classe, réception des données & export CSV.</p>
-          </div>
-        </button>
-
-        <!-- Tablet 1 Button -->
-        <button onclick="selectRole('TABLET', 1)" class="p-3.5 rounded-2xl bg-slate-800/80 hover:bg-blue-900/50 border-2 border-blue-500/40 text-left transition flex items-center gap-3">
-          <div class="p-2 bg-blue-600/30 text-blue-400 rounded-xl font-black text-sm">T1</div>
-          <div>
-            <h4 class="font-bold text-white text-xs">TABLETTE 1</h4>
-            <p class="text-[10px] text-slate-400">Élèves 1 à 5</p>
-          </div>
-        </button>
-
-        <!-- Tablet 2 Button -->
-        <button onclick="selectRole('TABLET', 2)" class="p-3.5 rounded-2xl bg-slate-800/80 hover:bg-emerald-900/50 border-2 border-emerald-500/40 text-left transition flex items-center gap-3">
-          <div class="p-2 bg-emerald-600/30 text-emerald-400 rounded-xl font-black text-sm">T2</div>
-          <div>
-            <h4 class="font-bold text-white text-xs">TABLETTE 2</h4>
-            <p class="text-[10px] text-slate-400">Élèves 6 à 10</p>
-          </div>
-        </button>
-
-        <!-- Tablet 3 Button -->
-        <button onclick="selectRole('TABLET', 3)" class="p-3.5 rounded-2xl bg-slate-800/80 hover:bg-amber-900/50 border-2 border-amber-500/40 text-left transition flex items-center gap-3">
-          <div class="p-2 bg-amber-600/30 text-amber-400 rounded-xl font-black text-sm">T3</div>
-          <div>
-            <h4 class="font-bold text-white text-xs">TABLETTE 3</h4>
-            <p class="text-[10px] text-slate-400">Élèves 11 à 15</p>
-          </div>
-        </button>
-
-        <!-- Tablet 4 Button -->
-        <button onclick="selectRole('TABLET', 4)" class="p-3.5 rounded-2xl bg-slate-800/80 hover:bg-rose-900/50 border-2 border-rose-500/40 text-left transition flex items-center gap-3 sm:col-span-2">
-          <div class="p-2 bg-rose-600/30 text-rose-400 rounded-xl font-black text-sm">T4</div>
-          <div>
-            <h4 class="font-bold text-white text-xs">TABLETTE 4</h4>
-            <p class="text-[10px] text-slate-400">Élèves 16 à 20</p>
-          </div>
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Modal 2: Paste / Import Prénoms & VMA (Prof Only) -->
-  <div id="paste-modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-200 p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 transform scale-95 transition-transform duration-200" id="paste-modal-box">
-      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-        <div class="flex items-center gap-2">
-          <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-xl">
-            <i class="ph-bold ph-clipboard-text text-xl"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-white">Importer Élèves & VMA</h3>
-            <p class="text-xs text-slate-400">Répartit automatiquement sur les 4 tablettes</p>
-          </div>
-        </div>
-        <button onclick="closePasteModal()" class="p-1 text-slate-400 hover:text-white rounded-lg">
-          <i class="ph-bold ph-x text-lg"></i>
-        </button>
-      </div>
-
-      <div>
-        <label class="block text-xs font-semibold text-slate-300 mb-1.5">
-          Format (un élève par ligne) : <br>
-          <span class="text-slate-400 font-normal">• Prénom (ex: <code class="text-amber-300">Lucas</code>)</span><br>
-          <span class="text-slate-400 font-normal">• Prénom, VMA (ex: <code class="text-amber-300">Emma, 13.5</code>)</span>
-        </label>
-        <textarea id="paste-input" rows="7" class="w-full bg-slate-950 border border-slate-800 text-slate-100 text-xs rounded-xl p-3 font-mono focus:outline-none focus:border-indigo-500 placeholder-slate-600" placeholder="Lucas, 12&#10;Emma, 13.5&#10;Léo, 11..."></textarea>
-      </div>
-
-      <div class="flex items-center justify-between gap-3 pt-2">
-        <button onclick="loadDemoClass()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium text-xs rounded-xl transition">
-          Ex. 20 élèves
-        </button>
-        <div class="flex items-center gap-2">
-          <button onclick="closePasteModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl transition">
-            Annuler
-          </button>
-          <button onclick="applyPastedNames()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
-            Valider et Distribuer
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toast Notification -->
-  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-slate-800 text-white border border-slate-700 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 text-sm">
-    <i id="toast-icon" class="ph-bold ph-check-circle text-emerald-400 text-lg"></i>
-    <span id="toast-msg">Message</span>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-    // Global App Configuration
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'chrono-eps-app';
-    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-      apiKey: "demo-api-key",
-      authDomain: "demo.firebaseapp.com",
-      projectId: "demo-project",
-      storageBucket: "demo.appspot.com",
-      messagingSenderId: "123456",
-      appId: "1:123456:web:123456"
-    };
-
-    let app, auth, db, user;
-    let currentSessionCode = localStorage.getItem('chrono_eps_session') || "EPS-2026";
-    let currentRole = "PROF"; // 'PROF' or 'TABLET'
-    let currentTabletNum = 1; // 1, 2, 3, 4
-    let activeProfTab = "ALL"; // 'ALL', 1, 2, 3, 4
-    let timerInterval = null;
-
-    // 20 Themes definition for cards
-    const CARD_THEMES = [
-      { bg: 'bg-red-950/90', border: 'border-red-500/60', badge: 'bg-red-500 text-white', displayBg: 'bg-red-900/90 border-red-700/80', runText: 'text-red-200', pauseBox: 'bg-red-950/90 border-red-800' },
-      { bg: 'bg-blue-950/90', border: 'border-blue-500/60', badge: 'bg-blue-500 text-white', displayBg: 'bg-blue-900/90 border-blue-700/80', runText: 'text-blue-200', pauseBox: 'bg-blue-950/90 border-blue-800' },
-      { bg: 'bg-emerald-950/90', border: 'border-emerald-500/60', badge: 'bg-emerald-500 text-white', displayBg: 'bg-emerald-900/90 border-emerald-700/80', runText: 'text-emerald-200', pauseBox: 'bg-emerald-950/90 border-emerald-800' },
-      { bg: 'bg-amber-950/90', border: 'border-amber-500/60', badge: 'bg-amber-500 text-white', displayBg: 'bg-amber-900/90 border-amber-700/80', runText: 'text-amber-200', pauseBox: 'bg-amber-950/90 border-amber-800' },
-      { bg: 'bg-purple-950/90', border: 'border-purple-500/60', badge: 'bg-purple-500 text-white', displayBg: 'bg-purple-900/90 border-purple-700/80', runText: 'text-purple-200', pauseBox: 'bg-purple-950/90 border-purple-800' },
-      { bg: 'bg-cyan-950/90', border: 'border-cyan-500/60', badge: 'bg-cyan-500 text-white', displayBg: 'bg-cyan-900/90 border-cyan-700/80', runText: 'text-cyan-200', pauseBox: 'bg-cyan-950/90 border-cyan-800' },
-      { bg: 'bg-rose-950/90', border: 'border-rose-500/60', badge: 'bg-rose-500 text-white', displayBg: 'bg-rose-900/90 border-rose-700/80', runText: 'text-rose-200', pauseBox: 'bg-rose-950/90 border-rose-800' },
-      { bg: 'bg-orange-950/90', border: 'border-orange-500/60', badge: 'bg-orange-500 text-white', displayBg: 'bg-orange-900/90 border-orange-700/80', runText: 'text-orange-200', pauseBox: 'bg-orange-950/90 border-orange-800' },
-      { bg: 'bg-indigo-950/90', border: 'border-indigo-500/60', badge: 'bg-indigo-500 text-white', displayBg: 'bg-indigo-900/90 border-indigo-700/80', runText: 'text-indigo-200', pauseBox: 'bg-indigo-950/90 border-indigo-800' },
-      { bg: 'bg-teal-950/90', border: 'border-teal-500/60', badge: 'bg-teal-500 text-white', displayBg: 'bg-teal-900/90 border-teal-700/80', runText: 'text-teal-200', pauseBox: 'bg-teal-950/90 border-teal-800' },
-      { bg: 'bg-fuchsia-950/90', border: 'border-fuchsia-500/60', badge: 'bg-fuchsia-500 text-white', displayBg: 'bg-fuchsia-900/90 border-fuchsia-700/80', runText: 'text-fuchsia-200', pauseBox: 'bg-fuchsia-950/90 border-fuchsia-800' },
-      { bg: 'bg-lime-950/90', border: 'border-lime-500/60', badge: 'bg-lime-600 text-white', displayBg: 'bg-lime-900/90 border-lime-700/80', runText: 'text-lime-200', pauseBox: 'bg-lime-950/90 border-lime-800' },
-      { bg: 'bg-violet-950/90', border: 'border-violet-500/60', badge: 'bg-violet-500 text-white', displayBg: 'bg-violet-900/90 border-violet-700/80', runText: 'text-violet-200', pauseBox: 'bg-violet-950/90 border-violet-800' },
-      { bg: 'bg-sky-950/90', border: 'border-sky-500/60', badge: 'bg-sky-500 text-white', displayBg: 'bg-sky-900/90 border-sky-700/80', runText: 'text-sky-200', pauseBox: 'bg-sky-950/90 border-sky-800' },
-      { bg: 'bg-yellow-950/90', border: 'border-yellow-500/60', badge: 'bg-yellow-600 text-white', displayBg: 'bg-yellow-900/90 border-yellow-700/80', runText: 'text-yellow-200', pauseBox: 'bg-yellow-950/90 border-yellow-800' },
-      { bg: 'bg-pink-950/90', border: 'border-pink-500/60', badge: 'bg-pink-500 text-white', displayBg: 'bg-pink-900/90 border-pink-700/80', runText: 'text-pink-200', pauseBox: 'bg-pink-950/90 border-pink-800' },
-      { bg: 'bg-slate-900', border: 'border-indigo-400/60', badge: 'bg-indigo-600 text-white', displayBg: 'bg-indigo-950 border-indigo-700/80', runText: 'text-indigo-200', pauseBox: 'bg-slate-950 border-indigo-900' },
-      { bg: 'bg-teal-900/90', border: 'border-teal-400/60', badge: 'bg-teal-600 text-white', displayBg: 'bg-teal-950 border-teal-700/80', runText: 'text-teal-200', pauseBox: 'bg-teal-950 border-teal-900' },
-      { bg: 'bg-rose-900/90', border: 'border-rose-400/60', badge: 'bg-rose-600 text-white', displayBg: 'bg-rose-950 border-rose-700/80', runText: 'text-rose-200', pauseBox: 'bg-rose-950 border-rose-900' },
-      { bg: 'bg-amber-900/90', border: 'border-amber-400/60', badge: 'bg-amber-600 text-white', displayBg: 'bg-amber-950 border-amber-700/80', runText: 'text-amber-200', pauseBox: 'bg-amber-950 border-amber-900' }
-    ];
-
-    class Chrono {
-      constructor(id, name, theme, vma = 12, percentVMA = 100, tabletId = 1) {
-        this.id = id;
-        this.name = name;
-        this.theme = theme;
-        this.vma = parseFloat(vma) || 12;
-        this.percentVMA = parseFloat(percentVMA) || 100;
-        this.tabletId = tabletId;
+    <script>
+        // Couleurs de fond pour les 20 cartes
+        const colors = ['#831843', '#701a75', '#4c1d95', '#312e81', '#1e3a8a', '#0c4a6e', '#064e3b', '#14532d', '#451a03', '#7f1d1d', '#581c87', '#0f766e', '#b45309', '#1d4ed8', '#047857', '#be123c', '#4338ca', '#0369a1', '#15803d', '#a16207'];
         
-        this.state = 'STOPPED'; // 'STOPPED', 'RUNNING', 'PAUSED'
-        this.runCount = 0;
-        this.pauseCount = 0;
-        this.runElapsed = 0;
-        this.pauseElapsed = 0;
-        this.lastCompletedPauseTime = 0;
-        this.runStartTime = 0;
-        this.pauseStartTime = 0;
-        this.history = [];
-      }
+        let cards = [];
 
-      getTargetTime360m() {
-        if (!this.vma || this.vma <= 0 || !this.percentVMA || this.percentVMA <= 0) return null;
-        const targetSpeedKmh = this.vma * (this.percentVMA / 100);
-        const targetSeconds = 1296 / targetSpeedKmh;
-        return targetSeconds * 1000;
-      }
-
-      start() {
-        const now = performance.now();
-        if (this.state === 'PAUSED') {
-          const pauseDuration = now - this.pauseStartTime;
-          this.pauseElapsed = pauseDuration;
-          this.lastCompletedPauseTime = pauseDuration;
-          if (this.pauseCount > 0) {
-            this.history.push({ type: `Pause ${this.pauseCount}`, duration: this.pauseElapsed });
-          }
-          this.runCount++;
-          this.runElapsed = 0;
-          this.runStartTime = now;
-          this.state = 'RUNNING';
-        } else if (this.state === 'STOPPED') {
-          this.runCount = 1;
-          this.runElapsed = 0;
-          this.runStartTime = now;
-          this.pauseElapsed = 0;
-          this.lastCompletedPauseTime = 0;
-          this.state = 'RUNNING';
+        function createCard(id, name = '', vma = '') {
+            const color = colors[id % colors.length];
+            return {
+                id, name, vma, vmaPercent: 100,
+                courseCount: 1, pauseCount: 0,
+                courseTime: 0, pauseTime: 0,
+                courseInterval: null, pauseInterval: null,
+                isRunning: false, isPaused: false,
+                history: [], color
+            };
         }
-      }
 
-      pause() {
-        if (this.state === 'RUNNING') {
-          const now = performance.now();
-          this.runElapsed = now - this.runStartTime;
-          this.history.push({ type: `Course ${this.runCount}`, duration: this.runElapsed });
-          this.pauseCount++;
-          this.pauseStartTime = now;
-          this.pauseElapsed = 0;
-          this.state = 'PAUSED';
+        // Initialisation ou récupération du localStorage
+        function loadData() {
+            const saved = localStorage.getItem('eps_chronos');
+            if (saved) {
+                cards = JSON.parse(saved);
+                // Réinitialiser les intervalles qui ne peuvent pas être stockés
+                cards.forEach(c => { c.courseInterval = null; c.pauseInterval = null; });
+            } else {
+                for(let i=0; i<20; i++) cards.push(createCard(i));
+            }
+            render();
         }
-      }
 
-      reset() {
-        this.state = 'STOPPED';
-        this.runCount = 0;
-        this.pauseCount = 0;
-        this.runElapsed = 0;
-        this.pauseElapsed = 0;
-        this.lastCompletedPauseTime = 0;
-        this.runStartTime = 0;
-        this.pauseStartTime = 0;
-        this.history = [];
-      }
+        function saveData() {
+            localStorage.setItem('eps_chronos', JSON.stringify(cards));
+        }
 
-      getCurrentRunTime(now) {
-        return this.state === 'RUNNING' ? (now - this.runStartTime) : this.runElapsed;
-      }
+        function formatTime(ms) {
+            if (ms === 0) return "00:00.0";
+            const d = new Date(ms);
+            const m = d.getUTCMinutes().toString().padStart(2, '0');
+            const s = d.getUTCSeconds().toString().padStart(2, '0');
+            const ms_short = Math.floor(d.getUTCMilliseconds() / 100);
+            return `${m}:${s}.${ms_short}`;
+        }
 
-      getCurrentPauseTime(now) {
-        if (this.state === 'PAUSED') return now - this.pauseStartTime;
-        if (this.state === 'RUNNING' && this.lastCompletedPauseTime > 0) return this.lastCompletedPauseTime;
-        return this.pauseElapsed;
-      }
+        function calculateTarget(vma, percent) {
+            if (!vma || isNaN(vma)) return '--:--';
+            const speedKmH = (parseFloat(vma) * parseInt(percent)) / 100;
+            if (speedKmH <= 0) return '--:--';
+            const speedMS = speedKmH / 3.6;
+            const timeS = 360 / speedMS;
+            return formatTime(timeS * 1000).split('.')[0]; // Retire les dixièmes pour la cible
+        }
 
-      toJSON() {
-        return {
-          id: this.id,
-          name: this.name,
-          vma: this.vma,
-          percentVMA: this.percentVMA,
-          tabletId: this.tabletId,
-          runCount: this.runCount,
-          pauseCount: this.pauseCount,
-          history: this.history
-        };
-      }
-    }
+        function render() {
+            const container = document.getElementById('chrono-container');
+            container.innerHTML = '';
 
-    let chronos = [];
-    let unsubscribeSnapshot = null;
+            cards.forEach((card, index) => {
+                const target = calculateTarget(card.vma, card.vmaPercent);
+                
+                const div = document.createElement('div');
+                div.className = 'card';
+                div.style.backgroundColor = card.color;
+                
+                let statusText = card.isPaused ? `Pause ${card.pauseCount}` : `Course ${card.courseCount}`;
+                let actionBtn = '';
+                
+                if (!card.isRunning && !card.isPaused) {
+                    actionBtn = `<button class="btn-success" onclick="toggleTimer(${index})">▶️ START</button>`;
+                } else if (card.isRunning) {
+                    actionBtn = `<button class="btn-danger" onclick="toggleTimer(${index})">⏸️ PAUSE</button>`;
+                } else if (card.isPaused) {
+                    actionBtn = `<button class="btn-success" onclick="toggleTimer(${index})">▶️ RE-START (0)</button>`;
+                }
 
-    async function initFirebase() {
-      try {
-        app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
+                div.innerHTML = `
+                    <input type="text" class="name-input" value="${card.name}" placeholder="Élève ${index+1}" onchange="updateName(${index}, this.value)">
+                    
+                    <div class="vma-group">
+                        <input type="number" step="0.5" placeholder="VMA" value="${card.vma}" onchange="updateVMA(${index}, this.value)">
+                        <select onchange="updatePercent(${index}, this.value)">
+                            ${[80, 90, 100, 110, 120, 130].map(p => `<option value="${p}" ${card.vmaPercent == p ? 'selected' : ''}>${p}% VMA</option>`).join('')}
+                        </select>
+                    </div>
+                    
+                    <div class="target-time">Cible 360m: (${target})</div>
+                    
+                    <div class="status-badge">${statusText}</div>
+                    
+                    <div class="timer-display" id="course-${index}">${formatTime(card.courseTime)}</div>
+                    <div class="pause-display ${card.isPaused ? 'blinking' : ''}" id="pause-${index}">
+                        ${card.pauseTime > 0 ? formatTime(card.pauseTime) : ''}
+                    </div>
 
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
+                    <div class="card-controls">
+                        ${actionBtn}
+                        <button style="background:#4b5563; color:white;" onclick="resetCard(${index})">↺</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            saveData();
+        }
+
+        function updateName(index, val) { cards[index].name = val; saveData(); }
+        function updateVMA(index, val) { cards[index].vma = val; render(); }
+        function updatePercent(index, val) { cards[index].vmaPercent = val; render(); }
+
+        function toggleTimer(index) {
+            const card = cards[index];
+
+            if (!card.isRunning && !card.isPaused) {
+                // Lancer Course 1
+                card.isRunning = true;
+                const startTime = Date.now() - card.courseTime;
+                card.courseInterval = setInterval(() => {
+                    card.courseTime = Date.now() - startTime;
+                    document.getElementById(`course-${index}`).innerText = formatTime(card.courseTime);
+                }, 100);
+            } 
+            else if (card.isRunning) {
+                // Mettre en Pause (Enregistre la course, lance la pause)
+                clearInterval(card.courseInterval);
+                card.isRunning = false;
+                card.isPaused = true;
+                card.pauseCount = card.courseCount;
+                
+                const startPause = Date.now();
+                card.pauseInterval = setInterval(() => {
+                    card.pauseTime = Date.now() - startPause;
+                    const pDisplay = document.getElementById(`pause-${index}`);
+                    if(pDisplay) pDisplay.innerText = formatTime(card.pauseTime);
+                }, 100);
+            }
+            else if (card.isPaused) {
+                // Relancer une nouvelle course (Arrête la pause, relance à 0)
+                clearInterval(card.pauseInterval);
+                
+                // Sauvegarde historique
+                card.history.push({
+                    course: card.courseCount,
+                    courseTime: card.courseTime,
+                    pauseTime: card.pauseTime
+                });
+
+                card.isPaused = false;
+                card.isRunning = true;
+                card.courseCount++;
+                card.courseTime = 0;
+                // On garde card.pauseTime intact pour qu'il reste affiché sur la carte !
+                
+                const startTime = Date.now();
+                card.courseInterval = setInterval(() => {
+                    card.courseTime = Date.now() - startTime;
+                    document.getElementById(`course-${index}`).innerText = formatTime(card.courseTime);
+                }, 100);
+            }
+            render();
+        }
+
+        function resetCard(index) {
+            clearInterval(cards[index].courseInterval);
+            clearInterval(cards[index].pauseInterval);
+            const id = cards[index].id;
+            const name = cards[index].name;
+            const vma = cards[index].vma;
+            cards[index] = createCard(id, name, vma);
+            render();
+        }
+
+        // --- EXPORT CSV (1 ligne par élève) ---
+        function exportCSV() {
+            let csv = "Eleve,VMA,Objectif 360m";
+            
+            // Trouver le nombre max de courses pour générer les colonnes dynamiquement
+            let maxCourses = 0;
+            cards.forEach(c => {
+                let total = c.history.length + (c.courseTime > 0 ? 1 : 0);
+                if (total > maxCourses) maxCourses = total;
+            });
+
+            for(let i=1; i<=maxCourses; i++) {
+                csv += `,Course ${i},Pause ${i}`;
+            }
+            csv += "\n";
+
+            cards.forEach(c => {
+                if (!c.name && c.courseTime === 0) return; // Ignorer cartes vides
+                let row = `${c.name || 'Inconnu'},${c.vma},${calculateTarget(c.vma, c.vmaPercent)}`;
+                
+                c.history.forEach(h => {
+                    row += `,${formatTime(h.courseTime)},${formatTime(h.pauseTime)}`;
+                });
+                
+                if (c.courseTime > 0 && !c.history.some(h => h.course === c.courseCount)) {
+                     row += `,${formatTime(c.courseTime)},${c.isPaused ? formatTime(c.pauseTime) : 'En cours'}`;
+                }
+                csv += row + "\n";
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "Bilan_EPS_Chronos.csv";
+            link.click();
+        }
+
+        // --- IMPORT COPIER-COLLER ---
+        function openImportModal() { document.getElementById('importModal').style.display = 'flex'; }
+        function closeModals() { 
+            document.getElementById('importModal').style.display = 'none'; 
+            document.getElementById('syncModal').style.display = 'none';
         }
         
-        user = auth.currentUser;
-        updateSyncStatus(true, "Connecté (Temps réel)");
-      } catch (err) {
-        console.warn("Firebase offline mode fallback:", err);
-        updateSyncStatus(false, "Mode Hors Ligne");
-      }
-    }
-
-    function updateSyncStatus(connected, text) {
-      const dot = document.getElementById('sync-dot');
-      const textEl = document.getElementById('sync-status-text');
-      if (dot) dot.className = `inline-block w-2 h-2 rounded-full ${connected ? 'bg-emerald-400' : 'bg-amber-400'}`;
-      if (textEl) textEl.textContent = text;
-    }
-
-    function getSessionDocRef(sessionCode) {
-      return doc(db, 'artifacts', appId, 'public', 'data', 'sessions', sessionCode.toUpperCase().trim());
-    }
-
-    function saveToLocalStorage() {
-      try {
-        const serialized = chronos.map(c => c.toJSON());
-        localStorage.setItem(`chrono_eps_students_${currentSessionCode}`, JSON.stringify(serialized));
-        localStorage.setItem('chrono_eps_session', currentSessionCode);
-      } catch (e) {
-        console.warn("LocalStorage error:", e);
-      }
-    }
-
-    function loadFromLocalStorage() {
-      try {
-        const cached = localStorage.getItem(`chrono_eps_students_${currentSessionCode}`);
-        if (cached) {
-          return JSON.parse(cached);
+        function processImport() {
+            const text = document.getElementById('importText').value.trim();
+            if (!text) return closeModals();
+            
+            const lines = text.split('\n');
+            let insertIndex = 0;
+            
+            lines.forEach(line => {
+                if(line.trim() === '') return;
+                let parts = line.split(/[;,]/);
+                let name = parts[0].trim();
+                let vma = parts.length > 1 ? parts[1].trim() : '';
+                
+                if (insertIndex >= cards.length) cards.push(createCard(cards.length));
+                cards[insertIndex].name = name;
+                cards[insertIndex].vma = vma;
+                insertIndex++;
+            });
+            closeModals();
+            render();
         }
-      } catch (e) {
-        console.warn("LocalStorage load error:", e);
-      }
-      return null;
-    }
 
-    async function saveSessionToFirebase() {
-      saveToLocalStorage();
-      if (!db || !user) return;
-
-      try {
-        const docRef = getSessionDocRef(currentSessionCode);
-        const serialized = chronos.map(c => c.toJSON());
-
-        await setDoc(docRef, {
-          sessionCode: currentSessionCode,
-          lastUpdated: new Date().toISOString(),
-          students: serialized
-        }, { merge: true });
-      } catch (err) {
-        console.error("Error saving to Firebase:", err);
-      }
-    }
-
-    window.selectRole = async function(role, tabletNum = 0) {
-      currentRole = role;
-      currentTabletNum = tabletNum;
-      
-      const sessionInput = document.getElementById('input-session-code').value.trim();
-      currentSessionCode = sessionInput ? sessionInput.toUpperCase() : "EPS-2026";
-      localStorage.setItem('chrono_eps_session', currentSessionCode);
-
-      document.getElementById('role-modal').classList.add('hidden');
-      document.getElementById('session-code-display').textContent = currentSessionCode;
-
-      const modeBadge = document.getElementById('app-mode-badge');
-      const profControls = document.getElementById('prof-header-controls');
-      const tabletControls = document.getElementById('tablet-header-controls');
-      const profTabs = document.getElementById('prof-tabs');
-      const tabletBanner = document.getElementById('tablet-banner');
-
-      if (currentRole === 'PROF') {
-        modeBadge.textContent = "PROFESSEUR (Vue globale)";
-        modeBadge.className = "text-xs font-bold px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30";
-        profControls.classList.remove('hidden');
-        tabletControls.classList.add('hidden');
-        profTabs.classList.remove('hidden');
-        tabletBanner.classList.add('hidden');
-      } else {
-        modeBadge.textContent = `TABLETTE ${currentTabletNum} (5 Élèves)`;
-        modeBadge.className = "text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
-        profControls.classList.add('hidden');
-        tabletControls.classList.remove('hidden');
-        profTabs.classList.add('hidden');
-        tabletBanner.classList.remove('hidden');
-        document.getElementById('tablet-banner-title').textContent = `TABLETTE ${currentTabletNum}`;
-      }
-
-      // Initialiser avec les données locales si existantes
-      const localData = loadFromLocalStorage();
-      initChronos(20, localData);
-
-      // Ecouter et charger immédiatement Firebase pour charger les vrais noms/VMA synchronisés
-      listenToSessionFirebase();
-      renderGrid();
-    };
-
-    window.switchRoleModal = function() {
-      document.getElementById('role-modal').classList.remove('hidden');
-    };
-
-    window.generateRandomSession = function() {
-      const randomCode = "EPS-" + Math.floor(1000 + Math.random() * 9000);
-      document.getElementById('input-session-code').value = randomCode;
-    };
-
-    window.setProfTab = function(tab) {
-      activeProfTab = tab;
-      [ 'ALL', 1, 2, 3, 4 ].forEach(t => {
-        const btn = document.getElementById(`tab-prof-${t}`);
-        if (btn) {
-          if (t === tab) {
-            btn.className = "px-3 py-1.5 text-xs font-bold rounded-xl transition bg-indigo-600 text-white shadow";
-          } else {
-            btn.className = "px-3 py-1.5 text-xs font-bold rounded-xl transition text-slate-400 hover:text-white hover:bg-slate-800";
-          }
-        }
-      });
-      renderGrid();
-    };
-
-    function initChronos(count = 20, studentsData = null) {
-      chronos = [];
-      for (let i = 1; i <= count; i++) {
-        const theme = CARD_THEMES[(i - 1) % CARD_THEMES.length];
-        const tabletId = Math.ceil(i / 5);
+        // --- SYNCHRO HORS LIGNE (MULTI-TABLETTES) ---
+        function openSyncModal() { document.getElementById('syncModal').style.display = 'flex'; }
         
-        let studentName = `Élève ${i}`;
-        let vma = 12;
-        let percentVMA = 100;
-        let runCount = 0;
-        let pauseCount = 0;
-        let history = [];
+        function generateSyncData() {
+            // Ne garder que les cartes avec un nom ou des temps pour alléger les données
+            const activeData = cards.filter(c => c.name !== '' || c.courseTime > 0);
+            
+            // On nettoie les objets cycliques (intervalles) avant l'export
+            const cleanData = activeData.map(c => {
+                let clone = { ...c };
+                delete clone.courseInterval;
+                delete clone.pauseInterval;
+                return clone;
+            });
 
-        if (studentsData && studentsData[i - 1]) {
-          const s = studentsData[i - 1];
-          studentName = s.name || `Élève ${i}`;
-          vma = s.vma || 12;
-          percentVMA = s.percentVMA || 100;
-          runCount = s.runCount || 0;
-          pauseCount = s.pauseCount || 0;
-          history = s.history || [];
+            const dataStr = JSON.stringify(cleanData);
+            const textArea = document.getElementById('syncText');
+            textArea.value = dataStr;
+            
+            // Tente de copier dans le presse-papier
+            textArea.select();
+            document.execCommand('copy');
+            alert("✅ Données générées et copiées ! \n\nVous pouvez maintenant les envoyer par AirDrop/Bluetooth au Professeur, ou lui faire scanner ce texte.");
         }
 
-        const chrono = new Chrono(i, studentName, theme, vma, percentVMA, tabletId);
-        chrono.runCount = runCount;
-        chrono.pauseCount = pauseCount;
-        chrono.history = history;
-        chronos.push(chrono);
-      }
-    }
-
-    function listenToSessionFirebase() {
-      if (!db) return;
-      if (unsubscribeSnapshot) unsubscribeSnapshot();
-
-      const docRef = getSessionDocRef(currentSessionCode);
-
-      unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          if (data && data.students) {
-            syncIncomingData(data.students);
-          }
+        function importSyncData() {
+            const text = document.getElementById('syncText').value.trim();
+            if(!text) return;
+            try {
+                const receivedCards = JSON.parse(text);
+                receivedCards.forEach(rc => {
+                    // Cherche une carte vide ou avec le même nom
+                    let targetIndex = cards.findIndex(c => c.name === rc.name);
+                    if (targetIndex === -1) targetIndex = cards.findIndex(c => c.name === '' && c.courseTime === 0);
+                    if (targetIndex === -1) {
+                        targetIndex = cards.length;
+                        cards.push(createCard(targetIndex));
+                    }
+                    cards[targetIndex] = { ...rc, courseInterval: null, pauseInterval: null, color: cards[targetIndex].color };
+                });
+                alert("✅ Données fusionnées avec succès !");
+                closeModals();
+                render();
+            } catch(e) {
+                alert("❌ Erreur : Format de données invalide.");
+            }
         }
-      }, (err) => {
-        console.warn("Firestore snapshot error:", err);
-      });
-    }
 
-    function syncIncomingData(remoteStudents) {
-      let needsReRender = false;
-      remoteStudents.forEach(remote => {
-        const local = chronos.find(c => c.id === remote.id);
-        if (local) {
-          if (local.name !== remote.name || local.vma !== remote.vma || local.percentVMA !== remote.percentVMA) {
-            needsReRender = true;
-          }
-          local.name = remote.name || local.name;
-          local.vma = remote.vma || local.vma;
-          local.percentVMA = remote.percentVMA || local.percentVMA;
-          local.tabletId = remote.tabletId || local.tabletId;
-          
-          if (currentRole === 'PROF' || remote.tabletId !== currentTabletNum) {
-            local.runCount = remote.runCount || local.runCount;
-            local.pauseCount = remote.pauseCount || local.pauseCount;
-            local.history = remote.history || local.history;
-          }
-        }
-      });
-
-      saveToLocalStorage();
-      if (needsReRender) {
-        renderGrid();
-      }
-    }
-
-    window.sendTabletDataToProf = async function() {
-      await saveSessionToFirebase();
-      const timeStr = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      const badge = document.getElementById('last-sent-badge');
-      if (badge) badge.textContent = `Envoyé à ${timeStr}`;
-      showToast("Résultats transmis au professeur !", "success");
-    };
-
-    function renderGrid() {
-      const container = document.getElementById('chrono-grid');
-      if (!container) return;
-      container.innerHTML = '';
-
-      let list = chronos;
-      if (currentRole === 'TABLET') {
-        list = chronos.filter(c => c.tabletId === currentTabletNum);
-      } else if (currentRole === 'PROF' && activeProfTab !== 'ALL') {
-        list = chronos.filter(c => c.tabletId === activeProfTab);
-      }
-
-      list.forEach(chrono => {
-        const html = createCardHTML(chrono);
-        container.insertAdjacentHTML('beforeend', html);
-      });
-
-      startGlobalTimer();
-    }
-
-    function createCardHTML(chrono) {
-      const t = chrono.theme;
-      const targetTimeMs = chrono.getTargetTime360m();
-      const targetFormatted = targetTimeMs ? formatTime(targetTimeMs) : '--:--.-';
-
-      return `
-        <div id="card-${chrono.id}" class="chrono-card flex flex-col justify-between p-3 rounded-2xl ${t.bg} border-2 ${t.border} shadow-lg relative overflow-hidden transition-all duration-200">
-          
-          <!-- Card Header -->
-          <div class="flex items-center justify-between gap-1 mb-1.5">
-            <div class="flex items-center gap-1.5 min-w-0 flex-1">
-              <span class="text-[10px] font-black px-1.5 py-0.5 rounded-md ${t.badge} shrink-0 shadow-sm">
-                #${String(chrono.id).padStart(2, '0')}
-              </span>
-              <input type="text" 
-                     value="${escapeHtml(chrono.name)}" 
-                     onchange="updateName(${chrono.id}, this.value)"
-                     class="bg-slate-900/70 font-bold text-xs text-white focus:outline-none focus:bg-slate-900 rounded px-1.5 py-0.5 border border-slate-700/60 focus:border-amber-400 transition w-full truncate"
-                     placeholder="Prénom" />
-            </div>
-
-            <button onclick="resetChrono(${chrono.id})" 
-                    class="p-1 text-slate-400 hover:text-rose-400 hover:bg-slate-900/60 rounded-lg transition shrink-0" 
-                    title="Remise à zéro">
-              <i class="ph-bold ph-arrow-counter-clockwise text-sm"></i>
-            </button>
-          </div>
-
-          <!-- VMA & Target Row -->
-          <div class="flex items-center justify-between gap-1 mb-1.5 px-2 py-1 bg-slate-950/60 rounded-xl border border-slate-800/80 text-[11px]">
-            <div class="flex items-center gap-1">
-              <span class="text-slate-400 font-bold text-[10px]">VMA:</span>
-              <input type="number" step="0.5" min="6" max="25" 
-                     value="${chrono.vma}" 
-                     onchange="updateVMA(${chrono.id}, this.value)"
-                     class="w-11 text-center font-extrabold bg-slate-900 text-amber-300 border border-slate-700 rounded px-1 py-0.5 text-[11px] focus:outline-none focus:border-amber-400" />
-              <span class="text-[10px] text-slate-500 font-semibold">km/h</span>
-            </div>
-            <div class="text-right">
-              <span class="text-[10px] text-slate-400 block font-medium">Cible 360m (${chrono.percentVMA}%)</span>
-              <span id="target-display-${chrono.id}" class="mono-time font-bold text-emerald-400 text-xs">${targetFormatted}</span>
-            </div>
-          </div>
-
-          <!-- Main Course Time Display -->
-          <div class="my-1 py-2 px-1.5 ${t.displayBg} rounded-xl border text-center relative shadow-inner">
-            <div class="text-[9px] uppercase tracking-wider font-extrabold text-slate-300 mb-0.5 flex items-center justify-center gap-1">
-              <span id="badge-course-label-${chrono.id}">${chrono.runCount > 0 ? `Course ${chrono.runCount}` : 'Course'}</span>
-            </div>
-            <div id="display-run-${chrono.id}" class="mono-time text-3xl xl:text-4xl font-black ${t.runText} tracking-tighter leading-none">
-              00:00.<span class="text-xl xl:text-2xl opacity-75">0</span>
-            </div>
-          </div>
-
-          <!-- Pause Time Banner -->
-          <div id="pause-container-${chrono.id}" class="mb-2 py-1 px-2 rounded-xl ${t.pauseBox} border text-xs font-semibold flex items-center justify-between transition-all">
-            <div class="flex items-center gap-1 text-[10px]">
-              <i class="ph-fill ph-pause text-amber-400 text-xs"></i>
-              <span id="badge-pause-label-${chrono.id}" class="text-amber-200">${chrono.pauseCount > 0 ? `Pause ${chrono.pauseCount}` : 'Pause'} :</span>
-            </div>
-            <div id="display-pause-${chrono.id}" class="mono-time font-bold text-amber-300 text-xs">
-              00:00.<span class="text-[10px] opacity-75">0</span>
-            </div>
-          </div>
-
-          <!-- Action Buttons -->
-          <div class="grid grid-cols-2 gap-1.5 mb-1">
-            <button id="btn-start-${chrono.id}" 
-                    onclick="toggleStart(${chrono.id})" 
-                    class="py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition">
-              <i class="ph-fill ph-play text-xs"></i>
-              <span>Start</span>
-            </button>
-
-            <button id="btn-pause-${chrono.id}" 
-                    onclick="togglePause(${chrono.id})" 
-                    class="py-2 px-2 rounded-xl bg-amber-600 hover:bg-amber-500 active:bg-amber-700 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition">
-              <i class="ph-fill ph-pause text-xs"></i>
-              <span>Pause</span>
-            </button>
-          </div>
-
-        </div>
-      `;
-    }
-
-    window.updateName = function(id, val) {
-      const chrono = chronos.find(c => c.id === id);
-      if (chrono) {
-        chrono.name = val.trim() || `Élève ${id}`;
-        saveSessionToFirebase();
-      }
-    };
-
-    window.updateVMA = function(id, val) {
-      const chrono = chronos.find(c => c.id === id);
-      if (chrono) {
-        chrono.vma = parseFloat(val) || 12;
-        const targetEl = document.getElementById(`target-display-${id}`);
-        if (targetEl) {
-          const targetTimeMs = chrono.getTargetTime360m();
-          targetEl.textContent = targetTimeMs ? formatTime(targetTimeMs) : '--:--.-';
-        }
-        saveSessionToFirebase();
-      }
-    };
-
-    window.applyGlobalVMAPercent = function(val) {
-      const percent = parseFloat(val) || 100;
-      chronos.forEach(c => {
-        c.percentVMA = percent;
-      });
-      renderGrid();
-      saveSessionToFirebase();
-    };
-
-    window.toggleStart = function(id) {
-      const chrono = chronos.find(c => c.id === id);
-      if (!chrono) return;
-
-      chrono.start();
-      updateCardUIState(chrono);
-      saveSessionToFirebase();
-    };
-
-    window.togglePause = function(id) {
-      const chrono = chronos.find(c => c.id === id);
-      if (!chrono) return;
-
-      chrono.pause();
-      updateCardUIState(chrono);
-      saveSessionToFirebase();
-    };
-
-    window.resetChrono = function(id) {
-      const chrono = chronos.find(c => c.id === id);
-      if (!chrono) return;
-
-      chrono.reset();
-      updateCardUIState(chrono);
-      saveSessionToFirebase();
-    };
-
-    function updateCardUIState(chrono) {
-      const card = document.getElementById(`card-${chrono.id}`);
-      const btnStart = document.getElementById(`btn-start-${chrono.id}`);
-      const btnPause = document.getElementById(`btn-pause-${chrono.id}`);
-      const courseLabel = document.getElementById(`badge-course-label-${chrono.id}`);
-      const pauseLabel = document.getElementById(`badge-pause-label-${chrono.id}`);
-
-      if (courseLabel) {
-        courseLabel.textContent = chrono.runCount > 0 ? `Course ${chrono.runCount}` : 'Course';
-      }
-      if (pauseLabel) {
-        pauseLabel.textContent = chrono.pauseCount > 0 ? `Pause ${chrono.pauseCount}` : 'Pause';
-      }
-
-      if (card) {
-        if (chrono.state === 'PAUSED') {
-          card.classList.add('card-pause-active');
-        } else {
-          card.classList.remove('card-pause-active');
-        }
-      }
-
-      if (btnStart && btnPause) {
-        if (chrono.state === 'RUNNING') {
-          btnStart.className = "py-2 px-2 rounded-xl bg-slate-800 text-slate-500 font-bold text-xs flex items-center justify-center gap-1 cursor-not-allowed";
-          btnPause.className = "py-2 px-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition";
-        } else if (chrono.state === 'PAUSED') {
-          btnStart.className = "py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition animate-pulse";
-          btnPause.className = "py-2 px-2 rounded-xl bg-slate-800 text-slate-500 font-bold text-xs flex items-center justify-center gap-1 cursor-not-allowed";
-        } else {
-          btnStart.className = "py-2 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition";
-          btnPause.className = "py-2 px-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center justify-center gap-1 shadow-md transition";
-        }
-      }
-    }
-
-    function startGlobalTimer() {
-      if (timerInterval) clearInterval(timerInterval);
-      
-      timerInterval = setInterval(() => {
-        const now = performance.now();
-
-        chronos.forEach(chrono => {
-          const runEl = document.getElementById(`display-run-${chrono.id}`);
-          const pauseEl = document.getElementById(`display-pause-${chrono.id}`);
-
-          if (runEl) {
-            const runMs = chrono.getCurrentRunTime(now);
-            runEl.innerHTML = formatTimeHTML(runMs);
-          }
-
-          if (pauseEl) {
-            const pauseMs = chrono.getCurrentPauseTime(now);
-            pauseEl.innerHTML = formatPauseTimeHTML(pauseMs);
-          }
-        });
-      }, 50);
-    }
-
-    function formatTime(ms) {
-      if (ms <= 0) return '00:00.0';
-      const totalSec = Math.floor(ms / 1000);
-      const min = Math.floor(totalSec / 60);
-      const sec = totalSec % 60;
-      const tenths = Math.floor((ms % 1000) / 100);
-
-      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${tenths}`;
-    }
-
-    function formatTimeHTML(ms) {
-      if (ms <= 0) return `00:00.<span class="text-xl xl:text-2xl opacity-75">0</span>`;
-      const totalSec = Math.floor(ms / 1000);
-      const min = Math.floor(totalSec / 60);
-      const sec = totalSec % 60;
-      const tenths = Math.floor((ms % 1000) / 100);
-
-      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.<span class="text-xl xl:text-2xl opacity-75">${tenths}</span>`;
-    }
-
-    function formatPauseTimeHTML(ms) {
-      if (ms <= 0) return `00:00.<span class="text-[10px] opacity-75">0</span>`;
-      const totalSec = Math.floor(ms / 1000);
-      const min = Math.floor(totalSec / 60);
-      const sec = totalSec % 60;
-      const tenths = Math.floor((ms % 1000) / 100);
-
-      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.<span class="text-[10px] opacity-75">${tenths}</span>`;
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    window.openPasteModal = function() {
-      const backdrop = document.getElementById('paste-modal-backdrop');
-      const box = document.getElementById('paste-modal-box');
-      backdrop.classList.remove('hidden');
-      setTimeout(() => {
-        backdrop.classList.remove('opacity-0');
-        box.classList.remove('scale-95');
-      }, 10);
-    };
-
-    window.closePasteModal = function() {
-      const backdrop = document.getElementById('paste-modal-backdrop');
-      const box = document.getElementById('paste-modal-box');
-      backdrop.classList.add('opacity-0');
-      box.classList.add('scale-95');
-      setTimeout(() => {
-        backdrop.classList.add('hidden');
-      }, 200);
-    };
-
-    window.loadDemoClass = function() {
-      const demoText = [
-        "Lucas, 12.5", "Emma, 13", "Léo, 11", "Chloé, 14", "Hugo, 12",
-        "Manon, 10.5", "Gabriel, 15", "Jade, 12", "Arthur, 13.5", "Louise, 11.5",
-        "Raphaël, 14", "Zélie, 12", "Jules, 13", "Inès, 10", "Maël, 12.5",
-        "Camille, 11", "Liam, 13.5", "Sarah, 12", "Ethan, 14.5", "Eva, 11.5"
-      ].join("\n");
-      document.getElementById('paste-input').value = demoText;
-    };
-
-    window.applyPastedNames = function() {
-      const rawText = document.getElementById('paste-input').value.trim();
-      if (!rawText) return;
-
-      const lines = rawText.split('\n').filter(l => l.trim() !== '');
-
-      lines.forEach((line, index) => {
-        if (index < 20) {
-          const parts = line.split(',');
-          const name = parts[0] ? parts[0].trim() : `Élève ${index + 1}`;
-          const vma = parts[1] ? parseFloat(parts[1].trim()) : 12;
-
-          chronos[index].name = name || `Élève ${index + 1}`;
-          chronos[index].vma = isNaN(vma) ? 12 : vma;
-        }
-      });
-
-      renderGrid();
-      saveSessionToFirebase();
-      closePasteModal();
-      showToast("Élèves et VMA enregistrés sur Firebase !", "success");
-    };
-
-    window.exportSummaryCSV = function() {
-      let csv = "ID;Prenom;Tablette;VMA;Percent_VMA;Temps_Cible_360m;Historique_Details\n";
-
-      chronos.forEach(c => {
-        const targetMs = c.getTargetTime360m();
-        const targetStr = targetMs ? formatTime(targetMs) : '';
-        const historyDetails = c.history.map(h => `${h.type}: ${formatTime(h.duration)}`).join(" | ");
-
-        csv += `${c.id};"${c.name}";${c.tabletId};${c.vma};${c.percentVMA}%;"${targetStr}";"${historyDetails}"\n`;
-      });
-
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ChronoClasse_${currentSessionCode}_${new Date().toISOString().slice(0, 10)}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-
-      showToast("Export CSV généré !", "success");
-    };
-
-    function showToast(msg, type = "success") {
-      const toast = document.getElementById('toast');
-      const icon = document.getElementById('toast-icon');
-      const text = document.getElementById('toast-msg');
-
-      if (!toast || !text) return;
-
-      text.textContent = msg;
-      if (type === "success") {
-        icon.className = "ph-bold ph-check-circle text-emerald-400 text-lg";
-      } else if (type === "warning") {
-        icon.className = "ph-bold ph-warning-circle text-amber-400 text-lg";
-      } else {
-        icon.className = "ph-bold ph-x-circle text-rose-400 text-lg";
-      }
-
-      toast.classList.remove('translate-y-20', 'opacity-0');
-      toast.classList.add('translate-y-0', 'opacity-100');
-
-      setTimeout(() => {
-        toast.classList.remove('translate-y-0', 'opacity-100');
-        toast.classList.add('translate-y-20', 'opacity-0');
-      }, 3000);
-    }
-
-    window.onload = async function() {
-      document.getElementById('input-session-code').value = currentSessionCode;
-      await initFirebase();
-    };
-  </script>
+        window.onload = loadData;
+    </script>
 </body>
 </html>
